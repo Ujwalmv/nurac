@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../constants/api_const.dart';
 import '../controlllers/auth_controller.dart';
 import '../controlllers/details_controller.dart';
+import 'member_edit_screen.dart';
 
 class DetailsScreen extends StatelessWidget {
   final int? PID;
@@ -160,8 +161,13 @@ class DetailsScreen extends StatelessWidget {
                 ),
               ),
 
-              ...?data.details?.map(
-                (member) => _buildFamilyCard(member.name, member.relation),
+              ...?controller.detailsModel.value.details?.map(
+                    (member) => GestureDetector(
+                  onTap: () {
+                    Get.to(() => EditMemberScreen(member: member,resID: controller.detailsModel.value.code,));
+                  },
+                  child: _buildFamilyCard(member.name, member.relation),
+                ),
               ),
               const SizedBox(height: 10),
 

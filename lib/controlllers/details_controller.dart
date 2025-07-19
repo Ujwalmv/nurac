@@ -1,27 +1,239 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:nurac/controlllers/home_controller.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:image_cropper/image_cropper.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
-import 'package:open_file/open_file.dart';
+import 'dart:convert';
+import 'package:url_launcher/url_launcher.dart';
 import '../constants/api_const.dart';
 import '../model/details_model.dart';
 import '../screens/home.dart';
+import '../controlllers/home_controller.dart';
 
 class DetailsController extends GetxController {
+
+  var selectedImage = Rxn<File>(); // Store the picked image
+// Text controllers for all fields
+  final addressController = TextEditingController();
+  final phone1Controller = TextEditingController();
+  final phone2Controller = TextEditingController();
+  final nameController = TextEditingController();
+  final relationController = TextEditingController();
+  final sexController = TextEditingController();
+  final dobController = TextEditingController();
+  final professionController = TextEditingController();
+  final qualificationController = TextEditingController();
+  final emailController = TextEditingController();
+  final mobileController = TextEditingController();
+  final livingStatusController = TextEditingController();
+  final benameController = TextEditingController();
+  final fnameController = TextEditingController();
+  final mnameController = TextEditingController();
+  final statusController = TextEditingController();
+  final birthplaceController = TextEditingController();
+  final birthstarController = TextEditingController();
+  final bloodgroupController = TextEditingController();
+  final childrenController = TextEditingController();
+  final nativeplaceController = TextEditingController();
+  final pofficeController = TextEditingController();
+  final subcasteController = TextEditingController();
+  final subsectorController = TextEditingController();
+
+  Map<String, TextEditingController> get controllers => {
+    'Name': nameController,
+    'Relation': relationController,
+    'Sex': sexController,
+    'Date of Birth': dobController,
+    'Profession': professionController,
+    'Qualification': qualificationController,
+    'Email': emailController,
+    'Mobile': mobileController,
+    'Living Status': livingStatusController,
+    'Beneficiary Name': benameController,
+    'Father\'s Name': fnameController,
+    'Mother\'s Name': mnameController,
+    'Marital Status': statusController,
+    'Birthplace': birthplaceController,
+    'Birthstar': birthstarController,
+    'Blood Group': bloodgroupController,
+    'Children': childrenController,
+    'Native Place': nativeplaceController,
+    'Post Office': pofficeController,
+    'Subcaste': subcasteController,
+    'Subsector': subsectorController,
+  };
+
+  // Initialize fields with member data
+  void initializeFields(Details member) {
+    nameController.text = member.name ?? '';
+    relationController.text = member.relation ?? '';
+    sexController.text = member.sex ?? '';
+    dobController.text = member.dob ?? '';
+    professionController.text = member.profession ?? '';
+    qualificationController.text = member.qualification ?? '';
+    emailController.text = member.email ?? '';
+    mobileController.text = member.mobile ?? '';
+    livingStatusController.text = member.livingstatus ?? '';
+    benameController.text = member.bename ?? '';
+    fnameController.text = member.fname ?? '';
+    mnameController.text = member.mname ?? '';
+    statusController.text = member.status ?? '';
+    birthplaceController.text = member.birthplace ?? '';
+    birthstarController.text = member.birthstar ?? '';
+    bloodgroupController.text = member.bloodgroup ?? '';
+    childrenController.text = member.children ?? '';
+    nativeplaceController.text = member.nativeplace ?? '';
+    pofficeController.text = member.poffice ?? '';
+    subcasteController.text = member.subcaste ?? '';
+    subsectorController.text = member.subsector ?? '';
+  }
+
+  // Method to set member data when navigating to EditMemberScreen
+  void setMember(Details member) {
+    initializeFields(member);
+  }
+
+
+  Future<void> pickImage(ImageSource source) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source);
+
+    if (pickedFile != null) {
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: pickedFile.path,
+        compressFormat: ImageCompressFormat.jpg,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Image',
+            toolbarColor: Color(0xFF383C44),
+            toolbarWidgetColor: Colors.white,
+            lockAspectRatio: false,
+            initAspectRatio: CropAspectRatioPreset.original,
+            hideBottomControls: false,
+          ),
+          IOSUiSettings(
+            title: 'Crop Image',
+            aspectRatioLockEnabled: false,
+          ),
+        ],
+      );
+
+      if (croppedFile != null) {
+        selectedImage.value = File(croppedFile.path);
+      }
+    }
+  }
+  Future<String?> convertImageToBase64DataUri(File imageFile) async {
+    try {
+      final compressedBytes = await FlutterImageCompress.compressWithFile(
+        imageFile.absolute.path,
+        quality: 60,
+      );
+
+      if (compressedBytes == null) return null;
+
+      final base64String = base64Encode(compressedBytes);
+
+      String mimeType = 'image/jpeg';
+      String ext = imageFile.path.split('.').last.toLowerCase();
+      if (ext == 'png') mimeType = 'image/png';
+
+      return 'data:$mimeType;base64,$base64String';
+    } catch (e) {
+      print('Error compressing/converting image: $e');
+      return null;
+    }
+  }
+
+
+  // Remove null or empty values from map
+  Map<String, dynamic> cleanPayload(Map<String, dynamic> map) {
+    map.removeWhere((key, value) => value == null || value.toString().trim().isEmpty);
+    return map;
+  }
+
+  // Save member data with optional image upload
+  Future<void> saveMemberData(Details member) async {
+    try {
+      Future.delayed(const Duration(milliseconds: 200), () {
+        updateLoading.value = true;
+      });
+
+      String? imageDataUri;
+      if (selectedImage.value != null) {
+        imageDataUri = await convertImageToBase64DataUri(selectedImage.value!);
+      }
+
+      final uri = Uri.parse('https://tras.nurac.com/api/member/${member.pID}');
+
+      final payload = {
+        "Detail": cleanPayload({
+          "PID": member.pID,
+          "ResID": member.resID,
+          "name": nameController.text,
+          "relation": relationController.text,
+          "sex": sexController.text,
+          "dob": dobController.text.isEmpty ? null : dobController.text,
+          "profession": professionController.text,
+          "qualification": qualificationController.text,
+          "email": emailController.text,
+          "mobile": mobileController.text,
+          "livingstatus": livingStatusController.text,
+          "bename": benameController.text,
+          "fname": fnameController.text,
+          "mname": mnameController.text,
+          "status": statusController.text,
+          "birthplace": birthplaceController.text,
+          "birthstar": birthstarController.text,
+          "bloodgroup": bloodgroupController.text,
+          "children": childrenController.text,
+          "nativeplace": nativeplaceController.text,
+          "poffice": pofficeController.text,
+          "subcaste": subcasteController.text,
+          "subsector": subsectorController.text,
+        }),
+        "Photo": cleanPayload({
+          "PID": member.pID,
+          "ImagePath": imageDataUri,
+        }),
+      };
+
+      final response = await http.put(
+        uri,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode(payload),
+      );
+
+      if (response.statusCode == 200) {
+        selectedImage.value = null;
+        Get.snackbar("Success", "Details updated successfully");
+      } else {
+        Get.snackbar("Error", "Update failed: ${response.body}");
+      }
+    } catch (e) {
+      Get.snackbar("Exception", e.toString());
+    } finally {
+      updateLoading.value = false;
+    }
+  }
+
+
+
   var isLoading = false.obs;
   var updateLoading = false.obs;
   var whatsAppLoading = false.obs;
   var downloadLoading = false.obs;
   var detailsModel = DetailsModel().obs;
 
-  final addressController = TextEditingController();
-  final phone1Controller = TextEditingController();
-  final phone2Controller = TextEditingController();
+
 
   Future<void> fetchDetails(int id) async {
     try {
@@ -83,9 +295,9 @@ class DetailsController extends GetxController {
 
   /// 🔗 Open WhatsApp with access message from API
   Future<void> openWhatsappWithAccessMessage(
-    int associationId,
-    int resId,
-  ) async {
+      int associationId,
+      int resId,
+      ) async {
     try {
       whatsAppLoading.value = true;
       final response = await http.get(
@@ -103,9 +315,9 @@ class DetailsController extends GetxController {
 
         final message = Uri.encodeComponent(
           "Hello $name, your login details:\n"
-          "🔹 Username: $username\n"
-          "🔹 Password: $password\n"
-          "🔹 Login Link: $url",
+              "🔹 Username: $username\n"
+              "🔹 Password: $password\n"
+              "🔹 Login Link: $url",
         );
 
         String? phone = phone1Controller.text.trim().isNotEmpty
@@ -164,5 +376,35 @@ class DetailsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+  }
+
+  @override
+  void onClose() {
+    // Dispose controllers
+    addressController.dispose();
+    phone1Controller.dispose();
+    phone2Controller.dispose();
+    nameController.dispose();
+    relationController.dispose();
+    sexController.dispose();
+    dobController.dispose();
+    professionController.dispose();
+    qualificationController.dispose();
+    emailController.dispose();
+    mobileController.dispose();
+    livingStatusController.dispose();
+    benameController.dispose();
+    fnameController.dispose();
+    mnameController.dispose();
+    statusController.dispose();
+    birthplaceController.dispose();
+    birthstarController.dispose();
+    bloodgroupController.dispose();
+    childrenController.dispose();
+    nativeplaceController.dispose();
+    pofficeController.dispose();
+    subcasteController.dispose();
+    subsectorController.dispose();
+    super.onClose();
   }
 }
