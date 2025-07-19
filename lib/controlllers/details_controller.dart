@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:nurac/controlllers/home_controller.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -25,7 +26,9 @@ class DetailsController extends GetxController {
   Future<void> fetchDetails(int id) async {
     try {
       isLoading.value = true;
-      final response = await http.get(Uri.parse(ApiConstants.residentDetails(id)));
+      final response = await http.get(
+        Uri.parse(ApiConstants.residentDetails(id)),
+      );
 
       if (response.statusCode == 200) {
         final model = DetailsModel.fromJson(json.decode(response.body));
@@ -64,8 +67,10 @@ class DetailsController extends GetxController {
       );
 
       if (response.statusCode == 200) {
+        await Get.find<HomeController>().fetchHomeData();
+        updateLoading.value = false;
         await Get.snackbar("Success", "Details updated successfully");
-        await Get.offAll(HomePage());
+        await Get.off(HomePage());
       } else {
         Get.snackbar("Error", "Update failed");
       }
@@ -77,11 +82,16 @@ class DetailsController extends GetxController {
   }
 
   /// 🔗 Open WhatsApp with access message from API
-  Future<void> openWhatsappWithAccessMessage(int associationId, int resId) async {
+  Future<void> openWhatsappWithAccessMessage(
+    int associationId,
+    int resId,
+  ) async {
     try {
-      whatsAppLoading.value=true;
+      whatsAppLoading.value = true;
       final response = await http.get(
-        Uri.parse('https://tras.nurac.com/api/create/user/get/$associationId/$resId'),
+        Uri.parse(
+          'https://tras.nurac.com/api/create/user/get/$associationId/$resId',
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -92,10 +102,10 @@ class DetailsController extends GetxController {
         final url = data['URL'] ?? '';
 
         final message = Uri.encodeComponent(
-            "Hello $name, your login details:\n"
-                "🔹 Username: $username\n"
-                "🔹 Password: $password\n"
-                "🔹 Login Link: $url"
+          "Hello $name, your login details:\n"
+          "🔹 Username: $username\n"
+          "🔹 Password: $password\n"
+          "🔹 Login Link: $url",
         );
 
         String? phone = phone1Controller.text.trim().isNotEmpty
@@ -124,11 +134,9 @@ class DetailsController extends GetxController {
       }
     } catch (e) {
       Get.snackbar("Error", "Failed: ${e.toString()}");
-    }
-    finally {
+    } finally {
       whatsAppLoading.value = false;
     }
-
   }
 
   Future<void> downloadPDF(String url) async {
@@ -137,7 +145,8 @@ class DetailsController extends GetxController {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final directory = await getExternalStorageDirectory();
-        final path = '${directory!.path}/downloaded_file_${DateTime.now().millisecondsSinceEpoch}.pdf';
+        final path =
+            '${directory!.path}/downloaded_file_${DateTime.now().millisecondsSinceEpoch}.pdf';
         final file = File(path);
         await file.writeAsBytes(response.bodyBytes);
         Get.snackbar('Success', 'File downloaded to $path');
@@ -147,8 +156,7 @@ class DetailsController extends GetxController {
       }
     } catch (e) {
       Get.snackbar('Error', 'Download failed: $e');
-    }
-    finally {
+    } finally {
       downloadLoading.value = false;
     }
   }

@@ -16,7 +16,7 @@ class HomeController extends GetxController {
   var displayedMembers = <Family>[].obs;
   var searchQuery = ''.obs;
   var hasMore = true.obs;
-  var pageSize = 10;
+  var pageSize = 25;
 
   // For birthdays
   var birthdayList = <BirthdayModel>[].obs;
@@ -89,14 +89,19 @@ class HomeController extends GetxController {
 
   // Search Members
   void search(String query) {
-    searchQuery.value = query;
+    searchQuery.value = query.toLowerCase();
+
     final filtered = (homeModel?.family ?? []).where((m) {
-      return m.name?.toLowerCase().contains(query.toLowerCase()) ?? false;
+      final name = m.name?.toLowerCase() ?? '';
+      final resId = m.resID?.toString() ?? '';
+      return name.contains(searchQuery.value) || resId.contains(searchQuery.value);
     }).toList();
 
     displayedMembers.value = filtered.take(pageSize).toList();
     hasMore.value = filtered.length > pageSize;
   }
+
+
 
   // Load More Members
   void loadMore() {

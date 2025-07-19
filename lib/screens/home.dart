@@ -25,30 +25,57 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      drawer: _buildDrawer(context),
-      appBar: AppBar(
-        leadingWidth: 25,
-        backgroundColor: const Color(0XFF383c44),
-        title: Hero(tag: "",
-        child: Image.asset("assets/images/logo-white.png", height: 30)),
-        actions: [
-          IconButton(
-            onPressed: authController.logout,
-            icon: const Text(
-              "Logout  ",
-              style: TextStyle(color: Colors.grey, fontSize: 16),
-            ),
+    return   WillPopScope(
+      onWillPop: () async {
+        // Show confirmation dialog
+        bool shouldClose = await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Exit App'),
+            content: const Text('Are you sure you want to close the app?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Yes'),
+              ),
+            ],
           ),
-        ],
-      ),
-      body: Column(
-        children: [
-          _buildSearchBar(),
-          Expanded(child: _buildMemberList()),
-        ],
+        );
+        return shouldClose;
+      },
+      child: Scaffold(
+        drawer: _buildDrawer(context),
+        appBar: AppBar(
+          scrolledUnderElevation: 0,
+          leadingWidth: 25,
+          backgroundColor: const Color(0XFF383c44),
+          title: Hero(
+            tag: "",
+            child: Image.asset("assets/images/logo-white.png", height: 30),
+          ),
+          actions: [
+            IconButton(
+              onPressed: authController.logout,
+              icon: const Text(
+                "Logout  ",
+                style: TextStyle(color: Colors.grey, fontSize: 16),
+              ),
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            _buildSearchBar(),
+            Expanded(child: _buildMemberList()),
+          ],
+        ),
       ),
     );
+
   }
 
   Widget _buildDrawer(BuildContext context) {

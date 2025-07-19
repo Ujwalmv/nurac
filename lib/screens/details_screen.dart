@@ -239,7 +239,7 @@ class DetailsScreen extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 0),
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: onPressed,
+        onPressed:loading == true?(){}: onPressed,
         style: ElevatedButton.styleFrom(backgroundColor: color),
         child: loading == true
             ? SizedBox(
