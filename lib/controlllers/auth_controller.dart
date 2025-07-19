@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:nurac/screens/login.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../constants/api_const.dart';
 import '../model/login_model.dart';
 import '../screens/home.dart';
+import '../screens/login.dart';
 
 class AuthController extends GetxController {
   var isLoading = false.obs;
 
   Future<void> login(String username, String password) async {
     isLoading.value = true;
-    final url = Uri.parse('https://tras.nurac.com/api/login/$username/$password');
+    final url = Uri.parse(ApiConstants.login(username, password)); // << Use constant
 
     try {
       final response = await http.get(url);
@@ -36,7 +37,6 @@ class AuthController extends GetxController {
     }
   }
 
-
   Future<void> logout() async {
     Get.defaultDialog(
       title: "Confirm Logout",
@@ -50,9 +50,8 @@ class AuthController extends GetxController {
         Get.offAll(LoginPage());
       },
       onCancel: () {
-        Get.back(); // just closes the dialog
+        Get.back();
       },
     );
   }
-
 }

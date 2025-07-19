@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nurac/controlllers/details_controller.dart';
+import 'package:nurac/screens/details_screen.dart';
 import '../controlllers/auth_controller.dart';
 import '../controlllers/home_controller.dart';
 
@@ -64,9 +66,11 @@ class HomePage extends StatelessWidget {
             homeController.isBirthdayView.value = false;
             Get.back();
           }),
-          _buildDrawerItem('Birthday Reminder', () {
-            homeController.isBirthdayView.value = true;
+          _buildDrawerItem('Birthday Reminder', () async {
             Get.back();
+            homeController.isBirthdayView.value = true;
+            await homeController.fetchBirthdayData();
+
           }),
           _buildDrawerItem('Logout', authController.logout),
         ],
@@ -185,51 +189,58 @@ class HomePage extends StatelessWidget {
           }
 
           final m = members[index];
-          return Container(
-            padding: const EdgeInsets.all(8),
-            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
-                  spreadRadius: 1,
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildMemberImage(m.photo),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "${m.code ?? ""}: ${m.name ?? "No name"}",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        m.address1?.replaceAll('\n', ', ') ?? '',
-                        style: TextStyle(color: Colors.grey[700], fontSize: 14),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "Last Updated: ${m.aDate.toString()}",
-                        style: const TextStyle(color: Colors.red, fontSize: 12),
-                      ),
-                    ],
+          return GestureDetector(
+            onTap: ()  {
+               Get.to(DetailsScreen());
+              Get.put(DetailsController()).fetchDetails(m.resID??0);
+
+            },
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.2),
+                    spreadRadius: 1,
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
                   ),
-                ),
-              ],
+                ],
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildMemberImage(m.photo),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "${m.code ?? ""}: ${m.name ?? "No name"}",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          m.address1?.replaceAll('\n', ', ') ?? '',
+                          style: TextStyle(color: Colors.grey[700], fontSize: 14),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Last Updated: ${m.aDate.toString()}",
+                          style: const TextStyle(color: Colors.red, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },
