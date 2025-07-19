@@ -16,6 +16,11 @@ class MyApp extends StatelessWidget {
        theme: ThemeData(
       primarySwatch: Colors.blue,
       primaryColor: Colors.blueAccent,
+         textSelectionTheme: TextSelectionThemeData(
+           cursorColor: Color(0xFF383C44),
+           selectionColor: Color(0xFF383C44).withOpacity(0.3),
+           selectionHandleColor: Color(0xFF383C44),
+         ),
       colorScheme: ColorScheme.fromSwatch(
         primarySwatch: Colors.blue,
         accentColor: Colors.blueAccent,

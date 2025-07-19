@@ -191,7 +191,7 @@ class HomePage extends StatelessWidget {
           final m = members[index];
           return GestureDetector(
             onTap: ()  {
-               Get.to(DetailsScreen());
+               Get.to(DetailsScreen(PID: m.pID,));
               Get.put(DetailsController()).fetchDetails(m.resID??0);
 
             },
