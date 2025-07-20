@@ -261,7 +261,7 @@ class DetailsController extends GetxController {
       final response = await http.get(
         Uri.parse(ApiConstants.residentDetails(id)),
       );
-
+log(response.body);
       if (response.statusCode == 200) {
         final model = DetailsModel.fromJson(json.decode(response.body));
         detailsModel.value = model;
@@ -427,4 +427,32 @@ class DetailsController extends GetxController {
     subsectorController.dispose();
     super.onClose();
   }
+
+  void performGetRequest(String url) async {
+    try {
+      downloadLoading.value = true;
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+
+        await Get.find<HomeController>().fetchHomeData();
+        downloadLoading.value = false;
+        Get.snackbar('Success', 'Operation successful');
+        await Get.off(HomePage());
+      } else {
+        Get.snackbar('Error', 'Failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Exception: $e');
+    } finally {
+      downloadLoading.value = false;
+    }
+  }
+
+
+
+
+
+
+
+
 }

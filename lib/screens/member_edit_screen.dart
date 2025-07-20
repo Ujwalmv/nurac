@@ -24,6 +24,7 @@ class EditMemberScreen extends StatelessWidget {
       appBar: AppBar(
         leadingWidth: 20,
         backgroundColor: darkColor,
+        centerTitle: true,
         title: FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
@@ -232,32 +233,32 @@ class EditMemberScreen extends StatelessWidget {
                               ),
                             );
                           },
-                      optionsViewBuilder: (
-                          BuildContext context,
-                          void Function(String) onSelected,
-                          Iterable<String> options,
+                      optionsViewBuilder:
+                          (
+                            BuildContext context,
+                            void Function(String) onSelected,
+                            Iterable<String> options,
                           ) {
-                        return Align(
-                          alignment: Alignment.topLeft,
-                          child: Material(
-                            elevation: 4,
-                            child: SizedBox(
-                              width: 200, // Set your desired width here
-                              child: ListView(
-                                padding: EdgeInsets.zero,
-                                shrinkWrap: true,
-                                children: options.map((String option) {
-                                  return ListTile(
-                                    title: Text(option),
-                                    onTap: () => onSelected(option),
-                                  );
-                                }).toList(),
+                            return Align(
+                              alignment: Alignment.topLeft,
+                              child: Material(
+                                elevation: 4,
+                                child: SizedBox(
+                                  width: 200, // Set your desired width here
+                                  child: ListView(
+                                    padding: EdgeInsets.zero,
+                                    shrinkWrap: true,
+                                    children: options.map((String option) {
+                                      return ListTile(
+                                        title: Text(option),
+                                        onTap: () => onSelected(option),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                        );
-                      },
-
+                            );
+                          },
                     ),
                   );
                 }
@@ -428,19 +429,94 @@ class EditMemberScreen extends StatelessWidget {
               ),
               PopupMenuButton<String>(
                 color: Colors.white,
-                onSelected: (value) {
-                  // String url = '';
-                  // if (value == 'summary') {
-                  //   url = '${ApiConstants.baseUrl}/address/download/${data.resID ?? 0}';
-                  // } else if (value == 'details') {
-                  //   url = '${ApiConstants.baseUrl}/members/download/${data.resID ?? 0}';
-                  // } else if (value == 'blank') {
-                  //   url = '${ApiConstants.baseUrl}/blank/download';
-                  // }
-                  // if (url.isNotEmpty) {
-                  //   controller.downloadPDF(url);
-                  // }
+                onSelected: (value) async {
+                  final String memberId = member.pID.toString();
+
+                  if (value == 'Transfer') {
+                    String? newResID = await showDialog<String>(
+                      context: context,
+                      builder: (context) {
+                        final TextEditingController resIdController =
+                            TextEditingController();
+                        return AlertDialog(
+                          actionsAlignment: MainAxisAlignment.spaceEvenly,
+                          title: const Text('Enter New ResID'),
+                          content: TextField(
+                            controller: resIdController,
+
+                            decoration: const InputDecoration(
+                              hintText: 'Enter ResID',
+                            ),
+                          ),
+                          actions: [
+                            ElevatedButton(
+                              onPressed: () => Navigator.pop(context), // Cancel
+                              child: const Text('Cancel'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.pink,
+                              ),
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(
+                                  context,
+                                  resIdController.text.trim(),
+                                );
+                              },
+                              child: const Text('Transfer'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+
+                    if (newResID != null && newResID.isNotEmpty) {
+                      String url =
+                          'https://tras.nurac.com/api/member/$memberId/$newResID';
+                      controller.performGetRequest(url);
+                    }
+                  } else if (value == 'Delete') {
+                    bool? confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        actionsAlignment: MainAxisAlignment.spaceEvenly,
+                        title: const Text('Confirm Deletion'),
+                        content: const Text(
+                          'Are you sure you want to delete this member?',
+                        ),
+                        actions: [
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.pink,
+                            ),
+                            onPressed: () =>
+                                Navigator.pop(context, false), // Cancel
+                            child: const Text('   No   '),
+                          ),
+
+                          ElevatedButton(
+                            onPressed: () =>
+                                Navigator.pop(context, true), // Confirm
+                            child: const Text('   Yes   '),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (confirm == true) {
+                      String url =
+                          'https://tras.nurac.com/api/member/delete/$memberId';
+                      controller.performGetRequest(url);
+                    }
+                  }
                 },
+
                 itemBuilder: (context) => [
                   const PopupMenuItem(
                     value: 'Transfer',
@@ -450,32 +526,29 @@ class EditMemberScreen extends StatelessWidget {
                 ],
                 child: Container(
                   width: double.infinity,
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.blue,
-
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    alignment: Alignment.center,
-                    child: controller.downloadLoading.value
-                        ? SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2, // thinner ring
-                            ),
-                          )
-                        : const Text(
-                            "Action ▼",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.circular(4),
                   ),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  alignment: Alignment.center,
+                  child: controller.downloadLoading.value
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          "Action ▼",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
             ],

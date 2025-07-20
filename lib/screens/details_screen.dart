@@ -278,7 +278,7 @@ class DetailsScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12),
         color: Colors.white,
         child: Text(
-          "${name ?? ''} (${relation ?? ''})",
+           "${name ?? ''}${relation==null?"":"(${relation ?? ''})"} ",
           style: const TextStyle(fontSize: 15),
         ),
       ),
