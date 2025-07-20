@@ -8,9 +8,10 @@ import 'dart:io';
 import 'dart:convert';
 
 class EditMemberScreen extends StatelessWidget {
-  final Details member;
+  final Details? member;
   final String? resID;
-  EditMemberScreen({super.key, required this.member, this.resID});
+  bool? newMember;
+  EditMemberScreen({super.key, this.newMember, this.member, this.resID});
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +19,7 @@ class EditMemberScreen extends StatelessWidget {
     final Color darkColor = const Color(0xFF383C44);
 
     // Initialize controller with member data
-    controller.initializeFields(member);
+    if (newMember == false) controller.initializeFields(member!);
 
     return Scaffold(
       appBar: AppBar(
@@ -28,7 +29,7 @@ class EditMemberScreen extends StatelessWidget {
         title: FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
-            member.name ?? "",
+            member?.name ?? "New Member",
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
@@ -71,18 +72,18 @@ class EditMemberScreen extends StatelessWidget {
                           height: 300,
                           fit: BoxFit.cover,
                         )
-                      : (member.photo != null &&
-                            member.photo!.startsWith('data:image'))
+                      : (member?.photo != null &&
+                            member!.photo!.startsWith('data:image'))
                       ? Image.memory(
-                          base64Decode(member.photo!.split(',')[1]),
+                          base64Decode(member!.photo!.split(',')[1]),
                           width: 300,
                           height: 300,
                           fit: BoxFit.cover,
                         )
-                      : (member.photo != null && member.photo!.isNotEmpty)
+                      : (member?.photo != null && member!.photo!.isNotEmpty)
                       ? CachedNetworkImage(
                           imageUrl:
-                              'https://tras.nurac.com/img/Uploads/${member.photo!}',
+                              'https://tras.nurac.com/img/Uploads/${member?.photo!}',
                           width: 300,
                           height: 300,
                           fit: BoxFit.cover,
@@ -338,7 +339,7 @@ class EditMemberScreen extends StatelessWidget {
                               context: context,
                               initialDate:
                                   DateTime.tryParse(entry.value.text) ??
-                                  DateTime(1970),
+                                  null,
                               firstDate: DateTime(1900),
                               lastDate: DateTime.now(),
                             );
@@ -382,9 +383,11 @@ class EditMemberScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: controller.updateLoading.value
+                        onPressed:
+                            controller.updateLoading.value ||
+                                controller.nameText.value.isEmpty
                             ? null
-                            : () => controller.saveMemberData(member),
+                            : () => controller.saveMemberData(newMember==true?null:member!),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -400,10 +403,10 @@ class EditMemberScreen extends StatelessWidget {
                               )
                             : Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Icon(Icons.save),
-                                  SizedBox(width: 8),
-                                  Text("Update"),
+                                children: [
+                                  // const Icon(Icons.save),
+                                  const SizedBox(width: 8),
+                                  Text(newMember == true ? "Save" : "Update"),
                                 ],
                               ),
                       ),
@@ -427,10 +430,11 @@ class EditMemberScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              if(newMember==false)
               PopupMenuButton<String>(
                 color: Colors.white,
                 onSelected: (value) async {
-                  final String memberId = member.pID.toString();
+                  final String? memberId = member?.pID.toString();
 
                   if (value == 'Transfer') {
                     String? newResID = await showDialog<String>(

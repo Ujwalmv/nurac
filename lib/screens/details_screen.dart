@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../constants/api_const.dart';
 import '../controlllers/auth_controller.dart';
 import '../controlllers/details_controller.dart';
+import 'home.dart';
 import 'member_edit_screen.dart';
 
 class DetailsScreen extends StatelessWidget {
@@ -17,171 +18,187 @@ class DetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    return Scaffold(
-      appBar: AppBar(
-        scrolledUnderElevation: 0,
-        leadingWidth: 25,
-        backgroundColor: darkColor,
-        title: Hero(
-          tag: "",
-          child: Image.asset("assets/images/logo-white.png", height: 30),
-        ),
-        actions: [
-          IconButton(
-            onPressed: authController.logout,
-            icon: const Text(
-              "Logout  ",
-              style: TextStyle(color: Colors.grey, fontSize: 16),
-            ),
+    return WillPopScope(
+      onWillPop: () async {
+        Get.offAll(() => HomePage()); // Back button (Android)
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          scrolledUnderElevation: 0,
+          leadingWidth: 25,
+          backgroundColor: darkColor,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Get.offAll(() => HomePage()); // AppBar back button
+            },
           ),
-        ],
-      ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return Center(child: CircularProgressIndicator(color: Colors.grey));
-        }
-        final data = controller.detailsModel.value;
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _labelValue("Res.ID : ", data.code ?? ''),
-              const SizedBox(height: 10),
-
-              _buildTextField(
-                controller: controller.addressController,
-                label: "Address",
-                maxLines: 4,
+          title: Hero(
+            tag: "",
+            child: Image.asset("assets/images/logo-white.png", height: 30),
+          ),
+          actions: [
+            IconButton(
+              onPressed: authController.logout,
+              icon: const Text(
+                "Logout  ",
+                style: TextStyle(color: Colors.grey, fontSize: 16),
               ),
-              const SizedBox(height: 10),
+            ),
+          ],
+        ),
+        body: Obx(() {
+          if (controller.isLoading.value) {
+            return Center(child: CircularProgressIndicator(color: Colors.grey));
+          }
+          final data = controller.detailsModel.value;
 
-              _buildTextField(
-                controller: controller.phone1Controller,
-                label: "Phone Number",
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 10),
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _labelValue("Res.ID : ", data.code ?? ''),
+                const SizedBox(height: 10),
 
-              _buildTextField(
-                controller: controller.phone2Controller,
-                label: "Phone Number",
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 15),
+                _buildTextField(
+                  controller: controller.addressController,
+                  label: "Address",
+                  maxLines: 4,
+                ),
+                const SizedBox(height: 10),
 
-              Column(
-                children: [
-                  _buildButton(
-                    loading: controller.updateLoading.value,
-                    label: "Update",
-                    color: Colors.green,
-                    onPressed: controller.updateDetails,
-                  ),
-                  _buildButton(
-                    loading: controller.isLoading.value,
-                    label: "Reset",
-                    color: Colors.orange,
-                    onPressed: () => controller.fetchDetails(data.resID!),
-                  ),
-                  _buildButton(
-                    label: 'Show Access for ResID ${data.code}',
-                    color: Colors.cyan,
-                    loading: controller.whatsAppLoading.value,
-                    onPressed: () => controller.openWhatsappWithAccessMessage(
-                      // controller.detailsModel.value.associationID!,
-                      10,
-                      PID ?? 0,
+                _buildTextField(
+                  controller: controller.phone1Controller,
+                  label: "Phone Number",
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 10),
+
+                _buildTextField(
+                  controller: controller.phone2Controller,
+                  label: "Phone Number",
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 15),
+
+                Column(
+                  children: [
+                    _buildButton(
+                      loading: controller.updateLoading.value,
+                      label: "Update",
+                      color: Colors.green,
+                      onPressed: controller.updateDetails,
                     ),
-                  ),
-                  PopupMenuButton<String>(
-                    color: Colors.white,
-                    onSelected: (value) {
-                      String url = '';
-                      if (value == 'summary') {
-                        url = '${ApiConstants.baseUrl}/address/download/${data.resID ?? 0}';
-                      } else if (value == 'details') {
-                        url = '${ApiConstants.baseUrl}/members/download/${data.resID ?? 0}';
-                      } else if (value == 'blank') {
-                        url = '${ApiConstants.baseUrl}/blank/download';
-                      }
-                      if (url.isNotEmpty) {
-                        controller.downloadPDF(url);
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(value: 'summary', child: Text('Summary')),
-                      const PopupMenuItem(value: 'details', child: Text('Details')),
-                      const PopupMenuItem(value: 'blank', child: Text('Blank')),
-                    ],
-                    child: Container(
-                      width: double.infinity,
+                    _buildButton(
+                      loading: controller.isLoading.value,
+                      label: "Reset",
+                      color: Colors.orange,
+                      onPressed: () => controller.fetchDetails(data.resID!),
+                    ),
+                    _buildButton(
+                      label: 'Show Access for ResID ${data.code}',
+                      color: Colors.cyan,
+                      loading: controller.whatsAppLoading.value,
+                      onPressed: () => controller.openWhatsappWithAccessMessage(
+                        // controller.detailsModel.value.associationID!,
+                        10,
+                        PID ?? 0,
+                      ),
+                    ),
+                    PopupMenuButton<String>(
+                      color: Colors.white,
+                      onSelected: (value) {
+                        String url = '';
+                        if (value == 'summary') {
+                          url = '${ApiConstants.baseUrl}/address/download/${data.resID ?? 0}';
+                        } else if (value == 'details') {
+                          url = '${ApiConstants.baseUrl}/members/download/${data.resID ?? 0}';
+                        } else if (value == 'blank') {
+                          url = '${ApiConstants.baseUrl}/blank/download';
+                        }
+                        if (url.isNotEmpty) {
+                          controller.downloadPDF(url);
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(value: 'summary', child: Text('Summary')),
+                        const PopupMenuItem(value: 'details', child: Text('Details')),
+                        const PopupMenuItem(value: 'blank', child: Text('Blank')),
+                      ],
                       child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.blue,
+                        width: double.infinity,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.blue,
 
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        alignment: Alignment.center,
-                        child:controller.downloadLoading.value?SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2, // thinner ring
+                            borderRadius: BorderRadius.circular(4),
                           ),
-                        ): const Text(
-                          "Download ▼",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          alignment: Alignment.center,
+                          child:controller.downloadLoading.value?SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2, // thinner ring
+                            ),
+                          ): const Text(
+                            "Download ▼",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
 
-                ],
-              ),
-              const Divider(),
+                  ],
+                ),
+                const Divider(),
 
-              Container(
-                height: 40,
-                alignment: Alignment.center,
-                width: double.infinity,
-                color: darkColor.withOpacity(.7),
-                child: const Text(
-                  "FAMILY MEMBERS",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                    color: Colors.white,
+                Container(
+                  height: 40,
+                  alignment: Alignment.center,
+                  width: double.infinity,
+                  color: darkColor.withOpacity(.7),
+                  child: const Text(
+                    "FAMILY MEMBERS",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
-              ),
 
-              ...?controller.detailsModel.value.details?.map(
-                    (member) => GestureDetector(
-                  onTap: () {
-                    Get.to(() => EditMemberScreen(member: member,resID: controller.detailsModel.value.code,));
+                ...?controller.detailsModel.value.details?.map(
+                      (member) => GestureDetector(
+                    onTap: () {
+                      Get.to(() => EditMemberScreen(member: member,resID: controller.detailsModel.value.code??"",newMember: false,));
+                    },
+                    child: _buildFamilyCard(member.name, member.relation),
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                _buildButton(
+                  label: 'New Member',
+                  color: Colors.blue,
+                  onPressed: () {
+                   controller.onClear();
+                    Get.to(() => EditMemberScreen( newMember: true,resID: controller.detailsModel.value.code??"" ));
+
                   },
-                  child: _buildFamilyCard(member.name, member.relation),
                 ),
-              ),
-              const SizedBox(height: 10),
-
-              _buildButton(
-                label: 'New Member',
-                color: Colors.blue,
-                onPressed: () {},
-              ),
-            ],
-          ),
-        );
-      }),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 

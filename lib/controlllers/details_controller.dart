@@ -80,6 +80,7 @@ class DetailsController extends GetxController {
       initializeFields(_originalMember!); // Reinitialize with original data
       selectedImage.value = null; // Clear selected image
     }
+    onClear();
   }
 
   // Initialize fields with member data
@@ -92,7 +93,7 @@ class DetailsController extends GetxController {
       DateTime? parsedDob = DateTime.tryParse(member.dob!);
       if (parsedDob != null) {
         dobController.text =
-        "${parsedDob.day.toString().padLeft(2, '0')}-${parsedDob.month.toString().padLeft(2, '0')}-${parsedDob.year}";
+            "${parsedDob.day.toString().padLeft(2, '0')}-${parsedDob.month.toString().padLeft(2, '0')}-${parsedDob.year}";
       } else {
         dobController.text = '';
       }
@@ -104,8 +105,8 @@ class DetailsController extends GetxController {
     qualificationController.text = member.qualification ?? '';
     emailController.text = member.email ?? '';
     mobileController.text = member.mobile ?? '';
-    memNOController.text="";
-    memNOController.text="";
+    memNOController.text = "";
+    memNOController.text = "";
     livingStatusController.text = member.livingstatus ?? '';
     benameController.text = member.bename ?? '';
     fnameController.text = member.fname ?? '';
@@ -184,7 +185,7 @@ class DetailsController extends GetxController {
   }
 
   // Save member data with optional image upload
-  Future<void> saveMemberData(Details member) async {
+  Future<void> saveMemberData(Details? member) async {
     try {
       Future.delayed(const Duration(milliseconds: 200), () {
         updateLoading.value = true;
@@ -195,14 +196,14 @@ class DetailsController extends GetxController {
         imageDataUri = await convertImageToBase64DataUri(selectedImage.value!);
       }
 
-      final uri = Uri.parse('https://tras.nurac.com/api/member/${member.pID}');
+      final uri =member==null?Uri.parse('https://tras.nurac.com/api/member'): Uri.parse('https://tras.nurac.com/api/member/${member?.pID??""}');
 
       final payload = {
-        "Membership":membershipController.text,
+        "Membership": membershipController.text,
         "Mem.No": memNOController.text,
         "Detail": cleanPayload({
-          "PID": member.pID,
-          "ResID": member.resID,
+          "PID": member?.pID??"",
+          "ResID": detailsModel.value.resID,
           "name": nameController.text,
           "relation": relationController.text,
           "sex": sexController.text,
@@ -225,10 +226,14 @@ class DetailsController extends GetxController {
           "subcaste": subcasteController.text,
           "subsector": subsectorController.text,
         }),
-        "Photo": cleanPayload({"PID": member.pID, "ImagePath": imageDataUri}),
+        "Photo": cleanPayload({"PID": member?.pID??"", "ImagePath": imageDataUri}),
       };
 
-      final response = await http.put(
+      final response =member==null? await http.post(
+        uri,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(payload),
+      ):await http.put(
         uri,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(payload),
@@ -237,8 +242,9 @@ class DetailsController extends GetxController {
       if (response.statusCode == 200) {
         selectedImage.value = null;
         Get.snackbar("Success", "Details updated successfully");
-        fetchDetails(member.resID??0);
-         Get.off(DetailsScreen());
+
+        fetchDetails(detailsModel.value.resID ?? 0);
+        Get.to(DetailsScreen());
       } else {
         Get.snackbar("Error", "Update failed: ${response.body}");
       }
@@ -261,7 +267,7 @@ class DetailsController extends GetxController {
       final response = await http.get(
         Uri.parse(ApiConstants.residentDetails(id)),
       );
-log(response.body);
+      log(response.body);
       if (response.statusCode == 200) {
         final model = DetailsModel.fromJson(json.decode(response.body));
         detailsModel.value = model;
@@ -392,10 +398,14 @@ log(response.body);
       downloadLoading.value = false;
     }
   }
+  RxString nameText = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
+    nameController.addListener(() {
+      nameText.value = nameController.text;
+    });
   }
 
   @override
@@ -428,12 +438,35 @@ log(response.body);
     super.onClose();
   }
 
+  void onClear() {
+    nameController.clear();
+    relationController.clear();
+    sexController.clear();
+    dobController.clear();
+    professionController.clear();
+    qualificationController.clear();
+    emailController.clear();
+    mobileController.clear();
+    livingStatusController.clear();
+    benameController.clear();
+    fnameController.clear();
+    mnameController.clear();
+    statusController.clear();
+    birthplaceController.clear();
+    birthstarController.clear();
+    bloodgroupController.clear();
+    childrenController.clear();
+    nativeplaceController.clear();
+    pofficeController.clear();
+    subcasteController.clear();
+    subsectorController.clear();
+  }
+
   void performGetRequest(String url) async {
     try {
       downloadLoading.value = true;
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
-
         await Get.find<HomeController>().fetchHomeData();
         downloadLoading.value = false;
         Get.snackbar('Success', 'Operation successful');
@@ -447,12 +480,4 @@ log(response.body);
       downloadLoading.value = false;
     }
   }
-
-
-
-
-
-
-
-
 }
