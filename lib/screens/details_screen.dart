@@ -20,7 +20,7 @@ class DetailsScreen extends StatelessWidget {
 
     return WillPopScope(
       onWillPop: () async {
-        Get.offAll(() => HomePage()); // Back button (Android)
+        Get.off(() => HomePage()); // Back button (Android)
         return false;
       },
       child: Scaffold(
@@ -31,7 +31,7 @@ class DetailsScreen extends StatelessWidget {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
-              Get.offAll(() => HomePage()); // AppBar back button
+              Get.off(() => HomePage()); // AppBar back button
             },
           ),
           title: Hero(
@@ -178,6 +178,7 @@ class DetailsScreen extends StatelessWidget {
                 ...?controller.detailsModel.value.details?.map(
                       (member) => GestureDetector(
                     onTap: () {
+                      controller.initializeFields(member);
                       Get.to(() => EditMemberScreen(member: member,resID: controller.detailsModel.value.code??"",newMember: false,));
                     },
                     child: _buildFamilyCard(member.name, member.relation),
@@ -190,6 +191,7 @@ class DetailsScreen extends StatelessWidget {
                   color: Colors.blue,
                   onPressed: () {
                    controller.onClear();
+
                     Get.to(() => EditMemberScreen( newMember: true,resID: controller.detailsModel.value.code??"" ));
 
                   },
