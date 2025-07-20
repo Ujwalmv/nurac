@@ -11,10 +11,12 @@ class DetailsScreen extends StatelessWidget {
   DetailsScreen({super.key, this.PID});
   final DetailsController controller = Get.put(DetailsController());
   final authController = Get.find<AuthController>();
+
   final Color darkColor = const Color(0xFF383C44);
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
         scrolledUnderElevation: 0,

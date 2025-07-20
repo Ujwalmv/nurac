@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:nurac/screens/details_screen.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
@@ -17,9 +18,9 @@ import '../screens/home.dart';
 import '../controlllers/home_controller.dart';
 
 class DetailsController extends GetxController {
-
   var selectedImage = Rxn<File>(); // Store the picked image
-// Text controllers for all fields
+  Details? _originalMember;
+  // Text controllers for all fields
   final addressController = TextEditingController();
   final phone1Controller = TextEditingController();
   final phone2Controller = TextEditingController();
@@ -31,6 +32,8 @@ class DetailsController extends GetxController {
   final qualificationController = TextEditingController();
   final emailController = TextEditingController();
   final mobileController = TextEditingController();
+  final memNOController = TextEditingController();
+  final membershipController = TextEditingController();
   final livingStatusController = TextEditingController();
   final benameController = TextEditingController();
   final fnameController = TextEditingController();
@@ -47,15 +50,17 @@ class DetailsController extends GetxController {
 
   Map<String, TextEditingController> get controllers => {
     'Name': nameController,
-    'Relation': relationController,
     'Sex': sexController,
     'Date of Birth': dobController,
+    'Relation': relationController,
     'Profession': professionController,
     'Qualification': qualificationController,
     'Email': emailController,
     'Mobile': mobileController,
+    "Mem.NO": memNOController,
+    "Membership": membershipController,
     'Living Status': livingStatusController,
-    'Beneficiary Name': benameController,
+    'Spouse Name': benameController,
     'Father\'s Name': fnameController,
     'Mother\'s Name': mnameController,
     'Marital Status': statusController,
@@ -69,16 +74,38 @@ class DetailsController extends GetxController {
     'Subsector': subsectorController,
   };
 
+  // Reset fields to original member data
+  void resetFields() {
+    if (_originalMember != null) {
+      initializeFields(_originalMember!); // Reinitialize with original data
+      selectedImage.value = null; // Clear selected image
+    }
+  }
+
   // Initialize fields with member data
   void initializeFields(Details member) {
+    _originalMember = member;
     nameController.text = member.name ?? '';
     relationController.text = member.relation ?? '';
     sexController.text = member.sex ?? '';
-    dobController.text = member.dob ?? '';
+    if (member.dob != null && member.dob!.isNotEmpty) {
+      DateTime? parsedDob = DateTime.tryParse(member.dob!);
+      if (parsedDob != null) {
+        dobController.text =
+        "${parsedDob.day.toString().padLeft(2, '0')}-${parsedDob.month.toString().padLeft(2, '0')}-${parsedDob.year}";
+      } else {
+        dobController.text = '';
+      }
+    } else {
+      dobController.text = '';
+    }
+
     professionController.text = member.profession ?? '';
     qualificationController.text = member.qualification ?? '';
     emailController.text = member.email ?? '';
     mobileController.text = member.mobile ?? '';
+    memNOController.text="";
+    memNOController.text="";
     livingStatusController.text = member.livingstatus ?? '';
     benameController.text = member.bename ?? '';
     fnameController.text = member.fname ?? '';
@@ -99,7 +126,6 @@ class DetailsController extends GetxController {
     initializeFields(member);
   }
 
-
   Future<void> pickImage(ImageSource source) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: source);
@@ -117,10 +143,7 @@ class DetailsController extends GetxController {
             initAspectRatio: CropAspectRatioPreset.original,
             hideBottomControls: false,
           ),
-          IOSUiSettings(
-            title: 'Crop Image',
-            aspectRatioLockEnabled: false,
-          ),
+          IOSUiSettings(title: 'Crop Image', aspectRatioLockEnabled: false),
         ],
       );
 
@@ -129,6 +152,7 @@ class DetailsController extends GetxController {
       }
     }
   }
+
   Future<String?> convertImageToBase64DataUri(File imageFile) async {
     try {
       final compressedBytes = await FlutterImageCompress.compressWithFile(
@@ -151,10 +175,11 @@ class DetailsController extends GetxController {
     }
   }
 
-
   // Remove null or empty values from map
   Map<String, dynamic> cleanPayload(Map<String, dynamic> map) {
-    map.removeWhere((key, value) => value == null || value.toString().trim().isEmpty);
+    map.removeWhere(
+      (key, value) => value == null || value.toString().trim().isEmpty,
+    );
     return map;
   }
 
@@ -173,6 +198,8 @@ class DetailsController extends GetxController {
       final uri = Uri.parse('https://tras.nurac.com/api/member/${member.pID}');
 
       final payload = {
+        "Membership":membershipController.text,
+        "Mem.No": memNOController.text,
         "Detail": cleanPayload({
           "PID": member.pID,
           "ResID": member.resID,
@@ -198,23 +225,20 @@ class DetailsController extends GetxController {
           "subcaste": subcasteController.text,
           "subsector": subsectorController.text,
         }),
-        "Photo": cleanPayload({
-          "PID": member.pID,
-          "ImagePath": imageDataUri,
-        }),
+        "Photo": cleanPayload({"PID": member.pID, "ImagePath": imageDataUri}),
       };
 
       final response = await http.put(
         uri,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode(payload),
       );
 
       if (response.statusCode == 200) {
         selectedImage.value = null;
         Get.snackbar("Success", "Details updated successfully");
+        fetchDetails(member.resID??0);
+         Get.off(DetailsScreen());
       } else {
         Get.snackbar("Error", "Update failed: ${response.body}");
       }
@@ -225,15 +249,11 @@ class DetailsController extends GetxController {
     }
   }
 
-
-
   var isLoading = false.obs;
   var updateLoading = false.obs;
   var whatsAppLoading = false.obs;
   var downloadLoading = false.obs;
   var detailsModel = DetailsModel().obs;
-
-
 
   Future<void> fetchDetails(int id) async {
     try {
@@ -295,9 +315,9 @@ class DetailsController extends GetxController {
 
   /// 🔗 Open WhatsApp with access message from API
   Future<void> openWhatsappWithAccessMessage(
-      int associationId,
-      int resId,
-      ) async {
+    int associationId,
+    int resId,
+  ) async {
     try {
       whatsAppLoading.value = true;
       final response = await http.get(
@@ -315,9 +335,9 @@ class DetailsController extends GetxController {
 
         final message = Uri.encodeComponent(
           "Hello $name, your login details:\n"
-              "🔹 Username: $username\n"
-              "🔹 Password: $password\n"
-              "🔹 Login Link: $url",
+          "🔹 Username: $username\n"
+          "🔹 Password: $password\n"
+          "🔹 Login Link: $url",
         );
 
         String? phone = phone1Controller.text.trim().isNotEmpty
