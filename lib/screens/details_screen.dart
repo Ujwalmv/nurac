@@ -8,8 +8,9 @@ import 'member_edit_screen.dart';
 
 class DetailsScreen extends StatelessWidget {
   final int? PID;
+  final bool newMember;
 
-  DetailsScreen({super.key, this.PID});
+  DetailsScreen({super.key, this.PID, required this.newMember});
   final DetailsController controller = Get.put(DetailsController());
   final authController = Get.find<AuthController>();
 
@@ -17,10 +18,10 @@ class DetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return WillPopScope(
       onWillPop: () async {
-        Get.off(() => HomePage()); // Back button (Android)
+        Get.to(() => HomePage(), transition: Transition.leftToRight,
+          duration: Duration(milliseconds: 300),); // Back button (Android)
         return false;
       },
       child: Scaffold(
@@ -31,7 +32,8 @@ class DetailsScreen extends StatelessWidget {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
-              Get.off(() => HomePage()); // AppBar back button
+              Get.to(() => HomePage(), transition: Transition.leftToRight,
+                duration: Duration(milliseconds: 300),); // AppBar back button
             },
           ),
           title: Hero(
@@ -87,75 +89,96 @@ class DetailsScreen extends StatelessWidget {
                   children: [
                     _buildButton(
                       loading: controller.updateLoading.value,
-                      label: "Update",
+                      label: newMember == true ? "Save" : "Update",
                       color: Colors.green,
-                      onPressed: controller.updateDetails,
+                      onPressed: () => controller.updateDetails(newMember),
                     ),
                     _buildButton(
                       loading: controller.isLoading.value,
                       label: "Reset",
                       color: Colors.orange,
-                      onPressed: () => controller.fetchDetails(data.resID!),
+                      onPressed: newMember == true
+                          ? () {
+                              controller.addressController.clear();
+                              controller.phone1Controller.clear();
+                              controller.phone2Controller.clear();
+                            }
+                          : () => controller.fetchDetails(data.resID!),
                     ),
-                    _buildButton(
-                      label: 'Show Access for ResID ${data.code}',
-                      color: Colors.cyan,
-                      loading: controller.whatsAppLoading.value,
-                      onPressed: () => controller.openWhatsappWithAccessMessage(
-                        // controller.detailsModel.value.associationID!,
-                        10,
-                        PID ?? 0,
+                    if (newMember == false)
+                      _buildButton(
+                        label: 'Show Access for ResID ${data.code ?? ""}',
+                        color: Colors.cyan,
+                        loading: controller.whatsAppLoading.value,
+                        onPressed: () =>
+                            controller.openWhatsappWithAccessMessage(
+                              // controller.detailsModel.value.associationID!,
+                              10,
+                              PID ?? 0,
+                            ),
                       ),
-                    ),
-                    PopupMenuButton<String>(
-                      color: Colors.white,
-                      onSelected: (value) {
-                        String url = '';
-                        if (value == 'summary') {
-                          url = '${ApiConstants.baseUrl}/address/download/${data.resID ?? 0}';
-                        } else if (value == 'details') {
-                          url = '${ApiConstants.baseUrl}/members/download/${data.resID ?? 0}';
-                        } else if (value == 'blank') {
-                          url = '${ApiConstants.baseUrl}/blank/download';
-                        }
-                        if (url.isNotEmpty) {
-                          controller.downloadPDF(url);
-                        }
-                      },
-                      itemBuilder: (context) => [
-                        const PopupMenuItem(value: 'summary', child: Text('Summary')),
-                        const PopupMenuItem(value: 'details', child: Text('Details')),
-                        const PopupMenuItem(value: 'blank', child: Text('Blank')),
-                      ],
-                      child: Container(
-                        width: double.infinity,
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.blue,
-
-                            borderRadius: BorderRadius.circular(4),
+                    if (newMember == false)
+                      PopupMenuButton<String>(
+                        color: Colors.white,
+                        onSelected: (value) {
+                          String url = '';
+                          if (value == 'summary') {
+                            url =
+                                '${ApiConstants.baseUrl}/address/download/${data.resID ?? 0}';
+                          } else if (value == 'details') {
+                            url =
+                                '${ApiConstants.baseUrl}/members/download/${data.resID ?? 0}';
+                          } else if (value == 'blank') {
+                            url = '${ApiConstants.baseUrl}/blank/download';
+                          }
+                          if (url.isNotEmpty) {
+                            controller.downloadPDF(url);
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'summary',
+                            child: Text('Summary'),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          alignment: Alignment.center,
-                          child:controller.downloadLoading.value?SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2, // thinner ring
+                          const PopupMenuItem(
+                            value: 'details',
+                            child: Text('Details'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'blank',
+                            child: Text('Blank'),
+                          ),
+                        ],
+                        child: Container(
+                          width: double.infinity,
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.blue,
+
+                              borderRadius: BorderRadius.circular(4),
                             ),
-                          ): const Text(
-                            "Download ▼",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            alignment: Alignment.center,
+                            child: controller.downloadLoading.value
+                                ? SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2, // thinner ring
+                                    ),
+                                  )
+                                : const Text(
+                                    "Download ▼",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                           ),
                         ),
                       ),
-                    ),
-
                   ],
                 ),
                 const Divider(),
@@ -176,26 +199,39 @@ class DetailsScreen extends StatelessWidget {
                 ),
 
                 ...?controller.detailsModel.value.details?.map(
-                      (member) => GestureDetector(
+                  (member) => GestureDetector(
                     onTap: () {
                       controller.initializeFields(member);
-                      Get.to(() => EditMemberScreen(member: member,resID: controller.detailsModel.value.code??"",newMember: false,));
+                      Get.to(
+                        () => EditMemberScreen(
+                          member: member,
+                          resID: controller.detailsModel.value.code ?? "",
+                          newMember: false,
+                        ),
+                        transition: Transition.downToUp,
+                        duration: Duration(milliseconds: 300),
+                      );
                     },
                     child: _buildFamilyCard(member.name, member.relation),
                   ),
                 ),
                 const SizedBox(height: 10),
 
-                _buildButton(
-                  label: 'New Member',
-                  color: Colors.blue,
-                  onPressed: () {
-                   controller.onClear();
+                if (newMember == false)
+                  _buildButton(
+                    label: 'New Member',
+                    color: Colors.blue,
+                    onPressed: () {
+                      controller.onClear();
 
-                    Get.to(() => EditMemberScreen( newMember: true,resID: controller.detailsModel.value.code??"" ));
-
-                  },
-                ),
+                      Get.to(
+                        () => EditMemberScreen(
+                          newMember: true,
+                          resID: controller.detailsModel.value.code ?? "",
+                        ),
+                      );
+                    },
+                  ),
               ],
             ),
           );
@@ -266,7 +302,7 @@ class DetailsScreen extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 0),
       width: double.infinity,
       child: ElevatedButton(
-        onPressed:loading == true?(){}: onPressed,
+        onPressed: loading == true ? () {} : onPressed,
         style: ElevatedButton.styleFrom(backgroundColor: color),
         child: loading == true
             ? SizedBox(
@@ -297,7 +333,7 @@ class DetailsScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12),
         color: Colors.white,
         child: Text(
-           "${name ?? ''}${relation==null?"":"(${relation ?? ''})"} ",
+          "${name ?? ''}${relation == null ? "" : "(${relation ?? ''})"} ",
           style: const TextStyle(fontSize: 15),
         ),
       ),

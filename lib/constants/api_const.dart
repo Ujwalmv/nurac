@@ -10,6 +10,6 @@ class ApiConstants {
   static String birthdays(int associationId) =>
       '$baseUrl/birthday/$associationId';
 
-  static String residentDetails(int resId) =>
+  static String residentDetails(String resId) =>
       '$baseUrl/addresses/$resId';
 }

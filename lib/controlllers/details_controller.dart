@@ -18,6 +18,7 @@ import '../screens/home.dart';
 import '../controlllers/home_controller.dart';
 
 class DetailsController extends GetxController {
+  Map<String, FocusNode> focusNodes = {};
   var selectedImage = Rxn<File>(); // Store the picked image
   Details? _originalMember;
   // Text controllers for all fields
@@ -34,7 +35,7 @@ class DetailsController extends GetxController {
   final mobileController = TextEditingController();
   final memNOController = TextEditingController();
   final membershipController = TextEditingController();
-  final livingStatusController = TextEditingController();
+  final livingStatusController = TextEditingController( text: "LIVE");
   final benameController = TextEditingController();
   final fnameController = TextEditingController();
   final mnameController = TextEditingController();
@@ -75,12 +76,12 @@ class DetailsController extends GetxController {
   };
 
   // Reset fields to original member data
-  void resetFields() {
+  void resetFields(bool newMember) {
     if (_originalMember != null) {
       initializeFields(_originalMember!); // Reinitialize with original data
       selectedImage.value = null; // Clear selected image
     }
-    onClear();
+   if(newMember==true)onClear();
   }
 
   // Initialize fields with member data
@@ -196,55 +197,67 @@ class DetailsController extends GetxController {
         imageDataUri = await convertImageToBase64DataUri(selectedImage.value!);
       }
 
-      final uri =member==null?Uri.parse('https://tras.nurac.com/api/member'): Uri.parse('https://tras.nurac.com/api/member/${member?.pID??""}');
+      final uri = member == null
+          ? Uri.parse('https://tras.nurac.com/api/member')
+          : Uri.parse('https://tras.nurac.com/api/member/${member?.pID ?? ""}');
 
       final payload = {
-        "Membership": membershipController.text,
-        "Mem.No": memNOController.text,
-        "Detail": cleanPayload({
+        "Membership": {
+          "MembershipNo": memNOController.text.toUpperCase(),
+          "MembershipType": membershipController.text.toUpperCase(),
+        },
+
+        "Detail": {
           "PID": member?.pID??"",
           "ResID": detailsModel.value.resID,
-          "name": nameController.text,
-          "relation": relationController.text,
-          "sex": sexController.text,
-          "dob": dobController.text.isEmpty ? null : dobController.text,
-          "profession": professionController.text,
-          "qualification": qualificationController.text,
+          "name": nameController.text.toUpperCase(),
+          "relation": relationController.text.toUpperCase(),
+          "sex": sexController.text.toUpperCase(),
+          "dob": dobController.text.isEmpty
+              ? null
+              : dobController.text.toUpperCase(),
+          "profession": professionController.text.toUpperCase(),
+          "qualification": qualificationController.text.toUpperCase(),
           "email": emailController.text,
-          "mobile": mobileController.text,
-          "livingstatus": livingStatusController.text,
-          "bename": benameController.text,
-          "fname": fnameController.text,
-          "mname": mnameController.text,
-          "status": statusController.text,
-          "birthplace": birthplaceController.text,
-          "birthstar": birthstarController.text,
-          "bloodgroup": bloodgroupController.text,
-          "children": childrenController.text,
-          "nativeplace": nativeplaceController.text,
-          "poffice": pofficeController.text,
-          "subcaste": subcasteController.text,
-          "subsector": subsectorController.text,
-        }),
-        "Photo": cleanPayload({"PID": member?.pID??"", "ImagePath": imageDataUri}),
+          "mobile": mobileController.text.toUpperCase(),
+          "Membership": membershipController.text.toUpperCase(),
+          "livingstatus": livingStatusController.text.toUpperCase(),
+          "bename": benameController.text.toUpperCase(),
+          "fname": fnameController.text.toUpperCase(),
+          "mname": mnameController.text.toUpperCase(),
+          "status": statusController.text.toUpperCase(),
+          "birthplace": birthplaceController.text.toUpperCase(),
+          "birthstar": birthstarController.text.toUpperCase(),
+          "bloodgroup": bloodgroupController.text.toUpperCase(),
+          "children": childrenController.text.toUpperCase(),
+          "nativeplace": nativeplaceController.text.toUpperCase(),
+          "poffice": pofficeController.text.toUpperCase(),
+          "subcaste": subcasteController.text.toUpperCase(),
+          "subsector": subsectorController.text.toUpperCase(),
+        },
+        "Photo": {"PID": member?.pID ?? "", "ImagePath": imageDataUri ?? ""},
       };
 
-      final response =member==null? await http.post(
-        uri,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(payload),
-      ):await http.put(
-        uri,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(payload),
-      );
+      final response = member == null
+          ? await http.post(
+              uri,
+              headers: {"Content-Type": "application/json"},
+              body: jsonEncode(payload),
+            )
+          : await http.put(
+              uri,
+              headers: {"Content-Type": "application/json"},
+              body: jsonEncode(payload),
+            );
+      print(payload);
 
       if (response.statusCode == 200) {
         selectedImage.value = null;
         Get.snackbar("Success", "Details updated successfully");
 
         fetchDetails(detailsModel.value.resID ?? 0);
-        Get.to(DetailsScreen());
+        Get.to(DetailsScreen(newMember: false), transition: Transition.downToUp,
+          duration: Duration(milliseconds: 300),);
       } else {
         Get.snackbar("Error", "Update failed: ${response.body}");
       }
@@ -265,7 +278,7 @@ class DetailsController extends GetxController {
     try {
       isLoading.value = true;
       final response = await http.get(
-        Uri.parse(ApiConstants.residentDetails(id)),
+        Uri.parse(ApiConstants.residentDetails(id.toString())),
       );
       log(response.body);
       if (response.statusCode == 200) {
@@ -286,23 +299,40 @@ class DetailsController extends GetxController {
     }
   }
 
-  Future<void> updateDetails() async {
-    final body = {
-      "Address1": addressController.text,
-      "AssociationID": detailsModel.value.associationID,
-      "Code": detailsModel.value.code,
-      "Phone1": phone1Controller.text,
-      "Phone2": phone2Controller.text,
-      "ResID": detailsModel.value.resID,
-    };
+  Future<void> updateDetails(bool newMember) async {
+    final body = newMember == true
+        ? {
+            "Address1": addressController.text,
+            "AssociationID": detailsModel.value.associationID ?? 1,
+            "Phone1": phone1Controller.text,
+            "Phone2": phone2Controller.text,
+          }
+        : {
+            "Address1": addressController.text,
+            "AssociationID": detailsModel.value.associationID,
+            "Code": detailsModel.value.code ?? "",
+            "Phone1": phone1Controller.text,
+            "Phone2": phone2Controller.text,
+            "ResID": detailsModel.value.resID ?? "",
+          };
 
     try {
       updateLoading.value = true;
-      final response = await http.put(
-        Uri.parse(ApiConstants.residentDetails(detailsModel.value.resID!)),
-        headers: {"Content-Type": "application/json"},
-        body: json.encode(body),
-      );
+      final response = newMember == true
+          ? await http.post(
+              Uri.parse(ApiConstants.residentDetails("")),
+              headers: {"Content-Type": "application/json"},
+              body: json.encode(body),
+            )
+          : await http.put(
+              Uri.parse(
+                ApiConstants.residentDetails(
+                  detailsModel.value.resID.toString(),
+                ),
+              ),
+              headers: {"Content-Type": "application/json"},
+              body: json.encode(body),
+            );
 
       if (response.statusCode == 200) {
         await Get.find<HomeController>().fetchHomeData();
@@ -398,6 +428,7 @@ class DetailsController extends GetxController {
       downloadLoading.value = false;
     }
   }
+
   RxString nameText = ''.obs;
 
   @override
@@ -406,10 +437,15 @@ class DetailsController extends GetxController {
     nameController.addListener(() {
       nameText.value = nameController.text;
     });
+    controllers.forEach((key, _) {
+      focusNodes[key] = FocusNode();
+    });
   }
 
   @override
   void onClose() {
+    // controllers.forEach((key, ctrl) => ctrl.dispose());
+    focusNodes.forEach((key, node) => node.dispose());
     // Dispose controllers
     addressController.dispose();
     phone1Controller.dispose();
@@ -439,6 +475,8 @@ class DetailsController extends GetxController {
   }
 
   void onClear() {
+    memNOController.clear();
+    membershipController.clear();
     nameController.clear();
     relationController.clear();
     sexController.clear();
@@ -468,9 +506,10 @@ class DetailsController extends GetxController {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         await Get.find<HomeController>().fetchHomeData();
+        await fetchDetails(detailsModel.value.resID ?? 0);
         downloadLoading.value = false;
         Get.snackbar('Success', 'Operation successful');
-        await Get.off(HomePage());
+        await Get.off(DetailsScreen(newMember: false));
       } else {
         Get.snackbar('Error', 'Failed: ${response.statusCode}');
       }

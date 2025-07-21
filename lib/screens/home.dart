@@ -113,7 +113,7 @@ class HomePage extends StatelessWidget {
           contentPadding: const EdgeInsets.symmetric(horizontal: 16),
           title: Text(title, style: const TextStyle(fontSize: 16)),
           trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
-          onTap: onTap,
+          onTap: onTap,selectedColor: Colors.orange,focusColor: Colors.orange,
         ),
         Divider(color: Colors.grey[300]),
       ],
@@ -154,12 +154,19 @@ class HomePage extends StatelessWidget {
             ),
           ),
         ),
-        Container(
-          height: 50,
-          alignment: Alignment.center,
-          color: Colors.blueAccent,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: const Text("New Family", style: TextStyle(color: Colors.white)),
+        GestureDetector(
+          onTap: () async {
+            await Get.delete<DetailsController>();
+            Get.to(DetailsScreen(newMember: true,), transition: Transition.rightToLeft,
+              duration: Duration(milliseconds: 300),);
+          },
+          child: Container(
+            height: 50,
+            alignment: Alignment.center,
+            color: Colors.blueAccent,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: const Text("New Family", style: TextStyle(color: Colors.white)),
+          ),
         ),
       ],
     );
@@ -218,7 +225,12 @@ class HomePage extends StatelessWidget {
           final m = members[index];
           return GestureDetector(
             onTap: ()  {
-               Get.to(DetailsScreen(PID: m.pID,));
+              Get.to(
+                    () => DetailsScreen(PID: m.pID, newMember: false),
+                transition: Transition.rightToLeft,
+                duration: Duration(milliseconds: 300),
+              );
+
               Get.put(DetailsController()).fetchDetails(m.resID??0);
 
             },
@@ -323,56 +335,75 @@ class HomePage extends StatelessWidget {
             }
 
             final b = birthdays[index];
-            return Container(
-              padding: const EdgeInsets.all(8),
-              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.2),
-                    spreadRadius: 1,
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
+            return Obx(() {
+              final isLoading = homeController.downloadLoadingPID.value == b.pID.toString();
+              return GestureDetector(
+                onTap:isLoading
+                    ? (){}: () {
+                  homeController.downloadPDF(
+                    "https://tras.nurac.com/api/birthday/download/${b.pID}",
+                    b.pID.toString(),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.2),
+                        spreadRadius: 1,
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildMemberImage(b.photo),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "${b.code ?? ""}: ${b.name ?? "No name"}",
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildMemberImage(b.photo),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "${b.code ?? ""}: ${b.name ?? "No name"}",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  b.address1?.replaceAll('\n', ', ') ?? '',
+                                  style: TextStyle(color: Colors.grey[700], fontSize: 14),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "DOB: ${b.dob != null ? b.dob!.split('T').first : 'N/A'}",
+                                  style: const TextStyle(color: Colors.red, fontSize: 12),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          b.address1?.replaceAll('\n', ', ') ?? '',
-                          style: TextStyle(color: Colors.grey[700], fontSize: 14),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "DOB: ${b.dob != null ? b.dob!.split('T').first : 'N/A'}",
-                          style: const TextStyle(color: Colors.red, fontSize: 12),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                     if (isLoading
+                      )  Text("Downloading...")
+
+                    ],
                   ),
-                ],
-              ),
-            );
+                ),
+              );
+            });
           },
         );
-      }),
+      })
     );
   }
 

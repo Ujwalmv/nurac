@@ -129,6 +129,10 @@ class EditMemberScreen extends StatelessWidget {
               ),
               ...controller.controllers.entries.map((entry) {
                 final isDOBField = entry.key == 'Date of Birth';
+                final live=entry.key=="Living Status";
+                final focusNode = controller.focusNodes[entry.key];
+                final keys = controller.controllers.keys.toList();
+                final currentIndex = keys.indexOf(entry.key);
 
                 // Dropdown with typing support: Qualification, Blood Group, Birthstar
                 if (entry.key == "Qualification" ||
@@ -136,24 +140,24 @@ class EditMemberScreen extends StatelessWidget {
                     entry.key == "Blood Group") {
                   final options = {
                     "Qualification": [
-                      '1st Std',
-                      '2nd Std',
-                      '3rd Std',
-                      '4th Std',
-                      '5th Std',
-                      '6th Std',
-                      '7th Std',
-                      '8th Std',
-                      '9th Std',
-                      '10th Std',
-                      '11th Std',
-                      '12th Std',
-                      'Diploma',
+                      '1ST STD',
+                      '2ND STD',
+                      '3RD STD',
+                      '4TH STD',
+                      '5TH STD',
+                      '6TH STD',
+                      '7TH STD',
+                      '8TH STD',
+                      '9TH STD',
+                      '10TH STD',
+                      '11TH STD',
+                      '12TH STD',
+                      'DIPLOMA',
                       'ITI',
                       'UG',
                       'PG',
-                      'M.Phil',
-                      'PhD',
+                      'M.PHIL',
+                      'PHD',
                     ],
                     "Blood Group": [
                       'A+',
@@ -166,33 +170,33 @@ class EditMemberScreen extends StatelessWidget {
                       'O-',
                     ],
                     "Birthstar": [
-                      'Ashwini',
-                      'Bharani',
-                      'Krittika',
-                      'Rohini',
-                      'Mrigashirsha',
-                      'Ardra',
-                      'Punarvasu',
-                      'Pushya',
-                      'Ashlesha',
-                      'Magha',
-                      'Purva Phalguni',
-                      'Uttara Phalguni',
-                      'Hasta',
-                      'Chitra',
-                      'Swati',
-                      'Vishakha',
-                      'Anuradha',
-                      'Jyeshtha',
-                      'Mula',
-                      'Purva Ashadha',
-                      'Uttara Ashadha',
-                      'Shravana',
-                      'Dhanishta',
-                      'Shatabhisha',
-                      'Purva Bhadrapada',
-                      'Uttara Bhadrapada',
-                      'Revati',
+                      'ASHWINI',
+                      'BHARANI',
+                      'KRITTIKA',
+                      'ROHINI',
+                      'MRIGASHIRSHA',
+                      'ARDRA',
+                      'PUNARVASU',
+                      'PUSHYA',
+                      'ASHLESHA',
+                      'MAGHA',
+                      'PURVA PHALGUNI',
+                      'UTTARA PHALGUNI',
+                      'HASTA',
+                      'CHITRA',
+                      'SWATI',
+                      'VISHAKHA',
+                      'ANURADHA',
+                      'JYESHTHA',
+                      'MULA',
+                      'PURVA ASHADHA',
+                      'UTTARA ASHADHA',
+                      'SHRAVANA',
+                      'DHANISHTA',
+                      'SHATABHISHA',
+                      'PURVA BHADRAPADA',
+                      'UTTARA BHADRAPADA',
+                      'REVATI',
                     ],
                   }[entry.key]!;
 
@@ -200,87 +204,90 @@ class EditMemberScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: RawAutocomplete<String>(
                       textEditingController: entry.value,
-                      focusNode: FocusNode(),
+                      focusNode: focusNode,
                       optionsBuilder: (TextEditingValue textEditingValue) {
                         return options.where((String option) {
                           return option.toLowerCase().contains(
-                            textEditingValue.text.toLowerCase(),
+                            textEditingValue.text.toUpperCase(),
                           );
                         });
                       },
-                      fieldViewBuilder:
-                          (
-                            BuildContext context,
-                            TextEditingController textController,
-                            FocusNode focusNode,
-                            VoidCallback onFieldSubmitted,
+                      fieldViewBuilder: (
+                          BuildContext context,
+                          TextEditingController textController,
+                          FocusNode focusNode,
+                          VoidCallback onFieldSubmitted,
                           ) {
-                            return TextField(
-                              controller: textController,
-                              focusNode: focusNode,
-                              decoration: InputDecoration(
-                                labelText: entry.key,
-                                labelStyle: TextStyle(color: Colors.grey),
-                                border: const UnderlineInputBorder(),
-                                enabledBorder: const UnderlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.grey),
-                                ),
-                                focusedBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: darkColor,
-                                    width: 2,
-                                  ),
-                                ),
-                              ),
-                            );
+                        return TextField(
+                          controller: textController,
+                          focusNode: focusNode,
+                          textInputAction: TextInputAction.next,
+                          onSubmitted: (_) {
+                            if (currentIndex < keys.length - 1) {
+                              final nextKey = keys[currentIndex + 1];
+                              controller.focusNodes[nextKey]?.requestFocus();
+                            } else {
+                              FocusScope.of(context).unfocus();
+                            }
                           },
-                      optionsViewBuilder:
-                          (
-                            BuildContext context,
-                            void Function(String) onSelected,
-                            Iterable<String> options,
+                          decoration: InputDecoration(
+                            labelText: entry.key,
+                            labelStyle: TextStyle(color: Colors.grey),
+                            border: const UnderlineInputBorder(),
+                            enabledBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(color: Colors.grey),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: darkColor, width: 2),
+                            ),
+                          ),
+                        );
+                      },
+                      optionsViewBuilder: (
+                          BuildContext context,
+                          void Function(String) onSelected,
+                          Iterable<String> options,
                           ) {
-                            return Align(
-                              alignment: Alignment.topLeft,
-                              child: Material(
-                                elevation: 4,
-                                child: SizedBox(
-                                  width: 200, // Set your desired width here
-                                  child: ListView(
-                                    padding: EdgeInsets.zero,
-                                    shrinkWrap: true,
-                                    children: options.map((String option) {
-                                      return ListTile(
-                                        title: Text(option),
-                                        onTap: () => onSelected(option),
-                                      );
-                                    }).toList(),
-                                  ),
-                                ),
+                        return Align(
+                          alignment: Alignment.topLeft,
+                          child: Material(
+                            elevation: 4,
+                            child: SizedBox(
+                              width: 200,
+                              child: ListView(
+                                padding: EdgeInsets.zero,
+                                shrinkWrap: true,
+                                children: options.map((String option) {
+                                  return ListTile(
+                                    title: Text(option),
+                                    onTap: () => onSelected(option),
+                                  );
+                                }).toList(),
                               ),
-                            );
-                          },
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   );
                 }
 
-                // Mem.NO and Membership in one row
+                // Mem.NO and Membership
                 if (entry.key == "Mem.NO") {
                   final memNoController = entry.value;
-                  final membershipController =
-                      controller.controllers["Membership"]!;
+                  final membershipController = controller.controllers["Membership"]!;
                   return Row(
                     children: [
                       SizedBox(
                         width: 100,
                         child: Padding(
-                          padding: const EdgeInsets.only(
-                            right: 8,
-                            top: 8,
-                            bottom: 8,
-                          ),
+                          padding: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
                           child: TextField(
                             controller: memNoController,
+                            focusNode: controller.focusNodes["Mem.NO"],
+                            textInputAction: TextInputAction.next,
+                            onSubmitted: (_) =>
+                                controller.focusNodes["Membership"]?.requestFocus(),
                             decoration: InputDecoration(
                               labelText: 'Mem.NO',
                               labelStyle: TextStyle(color: Colors.grey),
@@ -289,10 +296,7 @@ class EditMemberScreen extends StatelessWidget {
                                 borderSide: BorderSide(color: Colors.grey),
                               ),
                               focusedBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: darkColor,
-                                  width: 2,
-                                ),
+                                borderSide: BorderSide(color: darkColor, width: 2),
                               ),
                             ),
                           ),
@@ -300,13 +304,16 @@ class EditMemberScreen extends StatelessWidget {
                       ),
                       Expanded(
                         child: Padding(
-                          padding: const EdgeInsets.only(
-                            left: 8,
-                            top: 8,
-                            bottom: 8,
-                          ),
+                          padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8),
                           child: TextField(
                             controller: membershipController,
+                            focusNode: controller.focusNodes["Membership"],
+                            textInputAction: TextInputAction.next,
+                            onSubmitted: (_) {
+                              if (currentIndex + 1 < keys.length) {
+                                controller.focusNodes[keys[currentIndex + 1]]?.requestFocus();
+                              }
+                            },
                             decoration: InputDecoration(
                               labelText: 'Membership',
                               labelStyle: TextStyle(color: Colors.grey),
@@ -315,10 +322,7 @@ class EditMemberScreen extends StatelessWidget {
                                 borderSide: BorderSide(color: Colors.grey),
                               ),
                               focusedBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: darkColor,
-                                  width: 2,
-                                ),
+                                borderSide: BorderSide(color: darkColor, width: 2),
                               ),
                             ),
                           ),
@@ -329,31 +333,44 @@ class EditMemberScreen extends StatelessWidget {
                 }
 
                 if (entry.key == "Membership") return SizedBox.shrink();
-
+                if (live && entry.value.text.isEmpty) {
+                  entry.value.text = "LIVE";
+                }
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: GestureDetector(
                     onTap: isDOBField
                         ? () async {
-                            DateTime? pickedDate = await showDatePicker(
-                              context: context,
-                              initialDate:
-                                  DateTime.tryParse(entry.value.text) ??
-                                  null,
-                              firstDate: DateTime(1900),
-                              lastDate: DateTime.now(),
-                            );
-                            if (pickedDate != null) {
-                              entry.value.text =
-                                  "${pickedDate.day.toString().padLeft(2, '0')}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.year}";
-                            }
-                          }
+                      DateTime? pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.tryParse(entry.value.text) ?? DateTime(2000),
+                        firstDate: DateTime(1900),
+                        lastDate: DateTime.now(),
+                      );
+                      if (pickedDate != null) {
+                        final isoDate = pickedDate.toUtc().toIso8601String(); // Convert to UTC ISO 8601
+                        entry.value.text = isoDate;
+
+                      }
+
+                    }
                         : null,
                     child: AbsorbPointer(
                       absorbing: isDOBField,
                       child: TextField(
                         controller: entry.value,
+                        focusNode: focusNode,
                         readOnly: isDOBField,
+                        textInputAction:
+                        currentIndex < keys.length - 1 ? TextInputAction.next : TextInputAction.done,
+                        onSubmitted: (_) {
+                          if (currentIndex < keys.length - 1) {
+                            final nextKey = keys[currentIndex + 1];
+                            controller.focusNodes[nextKey]?.requestFocus();
+                          } else {
+                            FocusScope.of(context).unfocus();
+                          }
+                        },
                         decoration: InputDecoration(
                           labelText: entry.key,
                           labelStyle: TextStyle(color: Colors.grey),
@@ -365,11 +382,7 @@ class EditMemberScreen extends StatelessWidget {
                             borderSide: BorderSide(color: darkColor, width: 2),
                           ),
                           suffixIcon: isDOBField
-                              ? Icon(
-                                  Icons.calendar_today,
-                                  size: 20,
-                                  color: Colors.grey,
-                                )
+                              ? Icon(Icons.calendar_today, size: 20, color: Colors.grey)
                               : null,
                         ),
                       ),
@@ -377,6 +390,7 @@ class EditMemberScreen extends StatelessWidget {
                   ),
                 );
               }),
+
 
               Obx(
                 () => Row(
@@ -414,7 +428,7 @@ class EditMemberScreen extends StatelessWidget {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          controller.resetFields(); // Reset fields
+                          controller.resetFields(newMember!); // Reset fields
                         },
                         // icon: const Icon(Icons.refresh),
                         label: const Text(
@@ -464,7 +478,7 @@ class EditMemberScreen extends StatelessWidget {
                               onPressed: () {
                                 Navigator.pop(
                                   context,
-                                  resIdController.text.trim(),
+                                  resIdController.text.toUpperCase().trim(),
                                 );
                               },
                               child: const Text('Transfer'),

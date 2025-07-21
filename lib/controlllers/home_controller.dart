@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 import '../constants/api_const.dart';
 import '../model/home_model.dart';
 import '../model/birthday_model.dart';
@@ -94,7 +97,8 @@ class HomeController extends GetxController {
     final filtered = (homeModel?.family ?? []).where((m) {
       final name = m.name?.toLowerCase() ?? '';
       final resId = m.resID?.toString() ?? '';
-      return name.contains(searchQuery.value) || resId.contains(searchQuery.value);
+      final code = m.code?.toString() ?? '';
+      return name.contains(searchQuery.value) || resId.contains(searchQuery.value)||code.contains(searchQuery.value);
     }).toList();
 
     displayedMembers.value = filtered.take(pageSize).toList();
@@ -130,12 +134,18 @@ class HomeController extends GetxController {
     birthdaySearchQuery.value = query;
 
     final filtered = birthdayList.where((b) {
-      return b.name?.toLowerCase().contains(query.toLowerCase()) ?? false;
+      final name = b.name?.toLowerCase() ?? '';
+      final resId = b.resID?.toString() ?? '';
+      final code = b.code?.toString() ?? '';
+      return name.contains(query.toLowerCase()) ||
+          resId.contains(query) ||
+          code.contains(query);
     }).toList();
 
     displayedBirthdays.value = filtered.take(pageSize).toList();
     hasMoreBirthdays.value = filtered.length > pageSize;
   }
+
 
   // Load More Birthdays
   void loadMoreBirthdays() {
@@ -161,4 +171,29 @@ class HomeController extends GetxController {
       isBirthdayLoading.value = false;
     });
   }
+
+
+  var downloadLoadingPID = ''.obs;
+  Future<void> downloadPDF(String url,String pID) async {
+    try {
+      downloadLoadingPID.value = pID;
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final directory = await getExternalStorageDirectory();
+        final path =
+            '${directory!.path}/downloaded_file_${DateTime.now().millisecondsSinceEpoch}.jpeg';
+        final file = File(path);
+        await file.writeAsBytes(response.bodyBytes);
+        Get.snackbar('Success', 'File downloaded to $path');
+        OpenFile.open(file.path); // Optional: opens the PDF after downloading
+      } else {
+        Get.snackbar('Error', 'Failed to download file');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Download failed: $e');
+    } finally {
+      downloadLoadingPID.value = "";
+    }
+  }
+
 }
