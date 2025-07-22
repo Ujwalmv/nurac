@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:nurac/screens/login.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../user/screens/userHome_page.dart';
 import 'home.dart';
+import 'login.dart';
 
 
 class SplashPage extends StatelessWidget {
@@ -26,10 +27,29 @@ class SplashPage extends StatelessWidget {
   void _checkLogin() async {
     await Future.delayed(Duration(seconds: 2));
     final prefs = await SharedPreferences.getInstance();
+
     if (prefs.containsKey('AssociationID')) {
-      Get.off(() => HomePage());
+      final userType = prefs.getString('userType');
+      if (userType == 'admin') {
+        Get.off(() => HomePage());
+      } else if (userType == 'user') {
+        Get.off(() => UserhomePage());
+      } else {
+        Get.off(() => LoginPage());
+      }
     } else {
       Get.off(() => LoginPage());
     }
   }
+
+  // void _checkLogin() async {
+  //   await Future.delayed(Duration(seconds: 2));
+  //   final prefs = await SharedPreferences.getInstance();
+  //   if (prefs.containsKey('AssociationID')) {
+  //     Get.off(() => HomePage());
+  //   } else {
+  //     Get.off(() => LoginPage());
+  //   }
+  // }
+
 }

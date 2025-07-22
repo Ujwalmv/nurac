@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:nurac/screens/splash.dart';
+
+import 'admin/screens/splash.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

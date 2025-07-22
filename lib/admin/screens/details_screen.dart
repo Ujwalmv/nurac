@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../constants/api_const.dart';
+import '../../constants/api_const.dart';
 import '../controlllers/auth_controller.dart';
 import '../controlllers/details_controller.dart';
 import 'home.dart';

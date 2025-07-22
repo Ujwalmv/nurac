@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
-import '../constants/api_const.dart';
+import '../../constants/api_const.dart';
 import '../model/home_model.dart';
 import '../model/birthday_model.dart';
 

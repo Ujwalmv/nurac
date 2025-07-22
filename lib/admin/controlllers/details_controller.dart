@@ -6,16 +6,16 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:nurac/screens/details_screen.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
-import '../constants/api_const.dart';
+import '../../constants/api_const.dart';
 import '../model/details_model.dart';
+import '../screens/details_screen.dart';
 import '../screens/home.dart';
-import '../controlllers/home_controller.dart';
+import 'home_controller.dart';
 
 class DetailsController extends GetxController {
   Map<String, FocusNode> focusNodes = {};

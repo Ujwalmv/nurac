@@ -1,10 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:nurac/controlllers/details_controller.dart';
-import 'package:nurac/screens/details_screen.dart';
 import '../controlllers/auth_controller.dart';
+import '../controlllers/details_controller.dart';
 import '../controlllers/home_controller.dart';
+import 'details_screen.dart';
 
 class HomePage extends StatelessWidget {
   final homeController = Get.put(HomeController());

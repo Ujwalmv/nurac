@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:nurac/user/screens/userHome_page.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../constants/api_const.dart';
+import '../../constants/api_const.dart';
+
 import '../model/login_model.dart';
 import '../screens/home.dart';
 import '../screens/login.dart';
@@ -14,28 +16,45 @@ class AuthController extends GetxController {
 
   Future<void> login(String username, String password) async {
     isLoading.value = true;
-    final url = Uri.parse(ApiConstants.login(username, password)); // << Use constant
 
     try {
+      final url = Uri.parse(ApiConstants.login(username, password));
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final loginResponse = LoginResponse.fromJson(data);
+        final userType = data['UserType'];
 
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setInt('AssociationID', loginResponse.associationID);
+        await prefs.setInt('AssociationID', data['AssociationID'] ?? 0);
+        await prefs.setString('userType', userType ?? '');
 
-        Get.off(() => HomePage());
+        if (userType == 'User') {
+          final user = LoginUserResponse.fromJson(data);
+          await prefs.setInt('resID', user.resID ?? 0);
+          await prefs.setString('username', user.username ?? '');
+          await prefs.setString('mobile', user.mobile ?? '');
+          Get.off(() => UserhomePage());
+        } else if (userType == 'Admin') {
+          final admin = LoginResponse.fromJson(data);
+          await prefs.setInt('adminKey', admin.key ?? 0);
+          await prefs.setString('adminName', admin.name ?? '');
+          await prefs.setString('mobile', admin.mobile ?? '');
+          Get.off(() => HomePage());
+        } else {
+          Get.snackbar('Login Failed', 'Unknown user type');
+        }
       } else {
-        Get.snackbar('Error', 'Invalid credentials');
+        Get.snackbar('Login Failed', 'Invalid credentials');
       }
+
     } catch (e) {
       Get.snackbar('Error', e.toString());
     } finally {
       isLoading.value = false;
     }
   }
+
 
   Future<void> logout() async {
     Get.defaultDialog(
