@@ -4,15 +4,17 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../admin/controlllers/auth_controller.dart';
 import '../../admin/controlllers/details_controller.dart';
 import '../../admin/screens/details_screen.dart';
 
 class UserhomePage extends StatelessWidget {
-  const UserhomePage({super.key});
+  UserhomePage({super.key});
+  final authController = Get.put(AuthController());
 
   @override
   Widget build(BuildContext context) {
-    return  WillPopScope(
+    return WillPopScope(
       onWillPop: () async {
         // Show confirmation dialog
         bool shouldClose = await showDialog(
@@ -45,7 +47,7 @@ class UserhomePage extends StatelessWidget {
           ),
           actions: [
             IconButton(
-              onPressed: (){},
+              onPressed: () {},
               // authController.logout,
               icon: const Text(
                 "Logout  ",
@@ -56,19 +58,20 @@ class UserhomePage extends StatelessWidget {
         ),
         body: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 38.0),
-          child: Column(mainAxisAlignment: MainAxisAlignment.center,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               GestureDetector(
                 onTap: () async {
-    final prefs = await SharedPreferences.getInstance();
-    final resId = prefs.getInt('resID');
+                  final prefs = await SharedPreferences.getInstance();
+                  final resId = prefs.getInt('resID');
                   Get.to(
-                        () => DetailsScreen(PID: resId, newMember: false),
+                    () => DetailsScreen(PID: resId, newMember: false),
                     transition: Transition.rightToLeft,
                     duration: Duration(milliseconds: 300),
                   );
 
-                  Get.put(DetailsController()).fetchDetails(resId??0);
+                  Get.put(DetailsController()).fetchDetails(resId ?? 0);
                 },
                 child: Container(
                   width: double.infinity,
@@ -81,7 +84,7 @@ class UserhomePage extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(height: 50,),
+              SizedBox(height: 50),
               Container(
                 width: double.infinity,
                 color: Colors.orange,
@@ -92,8 +95,7 @@ class UserhomePage extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
               ),
-              SizedBox(height: 100,)
-
+              SizedBox(height: 100),
             ],
           ),
         ),

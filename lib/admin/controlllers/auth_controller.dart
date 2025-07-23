@@ -34,7 +34,8 @@ class AuthController extends GetxController {
           await prefs.setInt('resID', user.resID ?? 0);
           await prefs.setString('username', user.username ?? '');
           await prefs.setString('mobile', user.mobile ?? '');
-          Get.off(() => UserhomePage());
+          // Get.off(() => UserhomePage());
+          Get.off(() => HomePage());
         } else if (userType == 'Admin') {
           final admin = LoginResponse.fromJson(data);
           await prefs.setInt('adminKey', admin.key ?? 0);

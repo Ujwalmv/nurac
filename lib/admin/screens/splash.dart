@@ -24,32 +24,31 @@ class SplashPage extends StatelessWidget {
     );
   }
 
+  // void _checkLogin() async {
+  //   await Future.delayed(Duration(seconds: 2));
+  //   final prefs = await SharedPreferences.getInstance();
+  //
+  //
+  //     final userType = prefs.getString('userType');
+  //     if (userType == 'Admin') {
+  //       Get.off(() => HomePage());
+  //     } else if (userType == 'User') {
+  //       Get.off(() => UserhomePage());
+  //     } else {
+  //       Get.off(() => LoginPage());
+  //     }
+  //   }
+
+
+
   void _checkLogin() async {
     await Future.delayed(Duration(seconds: 2));
     final prefs = await SharedPreferences.getInstance();
-
     if (prefs.containsKey('AssociationID')) {
-      final userType = prefs.getString('userType');
-      if (userType == 'admin') {
-        Get.off(() => HomePage());
-      } else if (userType == 'user') {
-        Get.off(() => UserhomePage());
-      } else {
-        Get.off(() => LoginPage());
-      }
+      Get.off(() => HomePage());
     } else {
       Get.off(() => LoginPage());
     }
   }
-
-  // void _checkLogin() async {
-  //   await Future.delayed(Duration(seconds: 2));
-  //   final prefs = await SharedPreferences.getInstance();
-  //   if (prefs.containsKey('AssociationID')) {
-  //     Get.off(() => HomePage());
-  //   } else {
-  //     Get.off(() => LoginPage());
-  //   }
-  // }
 
 }

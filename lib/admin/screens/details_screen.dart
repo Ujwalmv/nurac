@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/api_const.dart';
 import '../controlllers/auth_controller.dart';
 import '../controlllers/details_controller.dart';
@@ -20,6 +21,7 @@ class DetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
+
         Get.to(() => HomePage(), transition: Transition.leftToRight,
           duration: Duration(milliseconds: 300),); // Back button (Android)
         return false;
@@ -56,12 +58,13 @@ class DetailsScreen extends StatelessWidget {
           }
           final data = controller.detailsModel.value;
 
+
           return SingleChildScrollView(
             padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _labelValue("Res.ID : ", data.code ?? ''),
+                _labelValue("Res.ID : ", controller.code.value ?? ''),
                 const SizedBox(height: 10),
 
                 _buildTextField(
@@ -103,9 +106,12 @@ class DetailsScreen extends StatelessWidget {
                               controller.phone1Controller.clear();
                               controller.phone2Controller.clear();
                             }
-                          : () => controller.fetchDetails(data.resID!),
+                          : () async {
+                        final prefs = await SharedPreferences.getInstance();
+                        final resId = prefs.getInt('resID');
+                        controller.fetchDetails(data.resID??resId!);}
                     ),
-                    if (newMember == false)
+                    if (newMember == false&&controller.userType.value=="Admin")
                       _buildButton(
                         label: 'Show Access for ResID ${data.code ?? ""}',
                         color: Colors.cyan,
@@ -117,7 +123,7 @@ class DetailsScreen extends StatelessWidget {
                               PID ?? 0,
                             ),
                       ),
-                    if (newMember == false)
+                    if (newMember == false&&controller.userType.value=="Admin")
                       PopupMenuButton<String>(
                         color: Colors.white,
                         onSelected: (value) {
@@ -205,7 +211,7 @@ class DetailsScreen extends StatelessWidget {
                       Get.to(
                         () => EditMemberScreen(
                           member: member,
-                          resID: controller.detailsModel.value.code ?? "",
+                          resID: controller.detailsModel.value.code ?? controller.code.value,
                           newMember: false,
                         ),
                         transition: Transition.downToUp,
@@ -227,7 +233,7 @@ class DetailsScreen extends StatelessWidget {
                       Get.to(
                         () => EditMemberScreen(
                           newMember: true,
-                          resID: controller.detailsModel.value.code ?? "",
+                          resID: controller.detailsModel.value.code ?? controller.code.value,
                         ),
                       );
                     },

@@ -8,6 +8,7 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
@@ -35,7 +36,7 @@ class DetailsController extends GetxController {
   final mobileController = TextEditingController();
   final memNOController = TextEditingController();
   final membershipController = TextEditingController();
-  final livingStatusController = TextEditingController( text: "LIVE");
+  final livingStatusController = TextEditingController(text: "LIVE");
   final benameController = TextEditingController();
   final fnameController = TextEditingController();
   final mnameController = TextEditingController();
@@ -81,7 +82,7 @@ class DetailsController extends GetxController {
       initializeFields(_originalMember!); // Reinitialize with original data
       selectedImage.value = null; // Clear selected image
     }
-   if(newMember==true)onClear();
+    if (newMember == true) onClear();
   }
 
   // Initialize fields with member data
@@ -199,7 +200,7 @@ class DetailsController extends GetxController {
 
       final uri = member == null
           ? Uri.parse('https://tras.nurac.com/api/member')
-          : Uri.parse('https://tras.nurac.com/api/member/${member?.pID ?? ""}');
+          : Uri.parse('https://tras.nurac.com/api/member/${member.pID ?? ""}');
 
       final payload = {
         "Membership": {
@@ -208,8 +209,8 @@ class DetailsController extends GetxController {
         },
 
         "Detail": {
-          "PID": member?.pID??"",
-          "ResID": detailsModel.value.resID,
+          "PID": member?.pID ?? "",
+          "ResID": resId.value,
           "name": nameController.text.toUpperCase(),
           "relation": relationController.text.toUpperCase(),
           "sex": sexController.text.toUpperCase(),
@@ -255,9 +256,12 @@ class DetailsController extends GetxController {
         selectedImage.value = null;
         Get.snackbar("Success", "Details updated successfully");
 
-        fetchDetails(detailsModel.value.resID ?? 0);
-        Get.to(DetailsScreen(newMember: false), transition: Transition.downToUp,
-          duration: Duration(milliseconds: 300),);
+        fetchDetails(resId.value ?? 0);
+        Get.to(
+          DetailsScreen(newMember: false),
+          transition: Transition.downToUp,
+          duration: Duration(milliseconds: 300),
+        );
       } else {
         Get.snackbar("Error", "Update failed: ${response.body}");
       }
@@ -273,22 +277,41 @@ class DetailsController extends GetxController {
   var whatsAppLoading = false.obs;
   var downloadLoading = false.obs;
   var detailsModel = DetailsModel().obs;
+  var associationID=0.obs;
+  var code="".obs;
+  var resId=0.obs;
 
   Future<void> fetchDetails(int id) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final userType = prefs.getString('userType');
     try {
       isLoading.value = true;
-      final response = await http.get(
-        Uri.parse(ApiConstants.residentDetails(id.toString())),
-      );
+      final response = userType == "User"
+          ? await http.get(
+              Uri.parse(ApiConstants.userResidentDetails(id.toString())),
+            )
+          : await http.get(
+              Uri.parse(ApiConstants.residentDetails(id.toString())),
+            );
       log(response.body);
       if (response.statusCode == 200) {
+        final data = json.decode(response.body);
         final model = DetailsModel.fromJson(json.decode(response.body));
-        detailsModel.value = model;
+        final address = data['Address'];
+        detailsModel.value.details = (address['Details'] as List)
+            .map((e) => Details.fromJson(e))
+            .toList();
 
+        // log(detailsModel.value.details!.length.toString());
         // Fill text fields with values
-        addressController.text = model.address1 ?? '';
-        phone1Controller.text = model.phone1 ?? '';
-        phone2Controller.text = model.phone2 ?? '';
+        addressController.text = model.address1 ?? address['Address1'];
+        phone1Controller.text = model.phone1 ?? address['Phone1'];
+        phone2Controller.text = model.phone2 ?? address['Phone2'];
+        associationID.value=model.associationID??address['AssociationID'];
+        code.value=model.code??address['Code'];
+        resId.value=model.resID??address['ResID'];
+
       } else {
         Get.snackbar("Error", "Failed to load data");
       }
@@ -303,20 +326,22 @@ class DetailsController extends GetxController {
     final body = newMember == true
         ? {
             "Address1": addressController.text,
-            "AssociationID": detailsModel.value.associationID ?? 1,
+            "AssociationID": associationID.value ?? 1,
             "Phone1": phone1Controller.text,
             "Phone2": phone2Controller.text,
           }
         : {
             "Address1": addressController.text,
-            "AssociationID": detailsModel.value.associationID,
-            "Code": detailsModel.value.code ?? "",
+            "AssociationID": associationID.value,
+            "Code": code.value,
             "Phone1": phone1Controller.text,
             "Phone2": phone2Controller.text,
-            "ResID": detailsModel.value.resID ?? "",
+            "ResID": resId.value,
           };
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final resId = prefs.getInt('resID');
       updateLoading.value = true;
       final response = newMember == true
           ? await http.post(
@@ -327,9 +352,10 @@ class DetailsController extends GetxController {
           : await http.put(
               Uri.parse(
                 ApiConstants.residentDetails(
-                  detailsModel.value.resID.toString(),
+                  (detailsModel.value.resID ?? resId).toString(),
                 ),
               ),
+
               headers: {"Content-Type": "application/json"},
               body: json.encode(body),
             );
@@ -430,9 +456,11 @@ class DetailsController extends GetxController {
   }
 
   RxString nameText = ''.obs;
+  RxString userType = ''.obs;
 
   @override
   void onInit() {
+    usertype();
     super.onInit();
     nameController.addListener(() {
       nameText.value = nameController.text;
@@ -440,6 +468,14 @@ class DetailsController extends GetxController {
     controllers.forEach((key, _) {
       focusNodes[key] = FocusNode();
     });
+  }
+
+
+
+  Future<void> usertype() async {
+    final prefs = await SharedPreferences.getInstance();
+    final usertype = prefs.getString('userType');
+    userType.value=usertype!;
   }
 
   @override
@@ -485,7 +521,7 @@ class DetailsController extends GetxController {
     qualificationController.clear();
     emailController.clear();
     mobileController.clear();
-    livingStatusController.clear();
+    // livingStatusController.clear();
     benameController.clear();
     fnameController.clear();
     mnameController.clear();
@@ -506,7 +542,7 @@ class DetailsController extends GetxController {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         await Get.find<HomeController>().fetchHomeData();
-        await fetchDetails(detailsModel.value.resID ?? 0);
+        await fetchDetails(resId.value ?? 0);
         downloadLoading.value = false;
         Get.snackbar('Success', 'Operation successful');
         await Get.off(DetailsScreen(newMember: false));

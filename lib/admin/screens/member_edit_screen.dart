@@ -444,7 +444,7 @@ class EditMemberScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              if(newMember==false)
+              if(newMember==false&&controller.userType.value=="Admin")
               PopupMenuButton<String>(
                 color: Colors.white,
                 onSelected: (value) async {
