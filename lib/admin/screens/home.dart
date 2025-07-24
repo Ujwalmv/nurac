@@ -230,6 +230,7 @@ class HomePage extends StatelessWidget {
           child: SizedBox(
             height: 50,
             child: TextField(
+              controller:homeController.searchController ,
               cursorColor: Colors.black,
               onChanged: (value) {
                 if (homeController.isBirthdayView.value) {

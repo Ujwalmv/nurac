@@ -2,6 +2,8 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_cropper/image_cropper.dart';
@@ -24,6 +26,7 @@ class DetailsController extends GetxController {
   Details? _originalMember;
   // Text controllers for all fields
   final addressController = TextEditingController();
+  final locationController = TextEditingController();
   final phone1Controller = TextEditingController();
   final phone2Controller = TextEditingController();
   final nameController = TextEditingController();
@@ -277,9 +280,9 @@ class DetailsController extends GetxController {
   var whatsAppLoading = false.obs;
   var downloadLoading = false.obs;
   var detailsModel = DetailsModel().obs;
-  var associationID=0.obs;
-  var code="".obs;
-  var resId=0.obs;
+  var associationID = 1.obs;
+  var code = "".obs;
+  var resId = 0.obs;
 
   Future<void> fetchDetails(int id) async {
     final prefs = await SharedPreferences.getInstance();
@@ -299,19 +302,22 @@ class DetailsController extends GetxController {
         final data = json.decode(response.body);
         final model = DetailsModel.fromJson(json.decode(response.body));
         final address = data['Address'];
-        detailsModel.value.details = (address['Details'] as List)
-            .map((e) => Details.fromJson(e))
-            .toList();
-
+        if (userType == "User") {
+          detailsModel.value.details = (address['Details'] as List)
+              .map((e) => Details.fromJson(e))
+              .toList();
+        } else {
+          detailsModel.value = model;
+        }
         // log(detailsModel.value.details!.length.toString());
         // Fill text fields with values
         addressController.text = model.address1 ?? address['Address1'];
         phone1Controller.text = model.phone1 ?? address['Phone1'];
         phone2Controller.text = model.phone2 ?? address['Phone2'];
-        associationID.value=model.associationID??address['AssociationID'];
-        code.value=model.code??address['Code'];
-        resId.value=model.resID??address['ResID'];
-
+        associationID.value = model.associationID ?? address['AssociationID'];
+        locationController.text=model.location??address['Location']??"";
+        code.value = model.code ?? address['Code']??"";
+        resId.value = model.resID ?? address['ResID']??"";
       } else {
         Get.snackbar("Error", "Failed to load data");
       }
@@ -322,22 +328,45 @@ class DetailsController extends GetxController {
     }
   }
 
+  var selectedLat = RxnDouble();
+  var selectedLng = RxnDouble();
+
+  void setLocationFromMap({
+    required double lat,
+    required double lng,
+    required String address,
+  }) {
+    selectedLat.value = lat;
+    selectedLng.value = lng;
+    locationController.text = address;
+  }
+
   Future<void> updateDetails(bool newMember) async {
-    final body = newMember == true
+    final lat = selectedLat.value;
+    final lng = selectedLng.value;
+    final location = locationController.text;
+
+    final body = newMember
         ? {
-            "Address1": addressController.text,
-            "AssociationID": associationID.value ?? 1,
-            "Phone1": phone1Controller.text,
-            "Phone2": phone2Controller.text,
-          }
+      "Address1": addressController.text,
+      "AssociationID": associationID.value,
+      "Phone1": phone1Controller.text,
+      "Phone2": phone2Controller.text,
+      "Location":location,
+      "Latitude": lat ?? 0.0,
+      "Longitude": lng ?? 0.0,
+    }
         : {
-            "Address1": addressController.text,
-            "AssociationID": associationID.value,
-            "Code": code.value,
-            "Phone1": phone1Controller.text,
-            "Phone2": phone2Controller.text,
-            "ResID": resId.value,
-          };
+      "Address1": addressController.text,
+      "AssociationID": associationID.value,
+      "Code": code.value,
+      "Phone1": phone1Controller.text,
+      "Phone2": phone2Controller.text,
+      "ResID": resId.value,
+      "Location":location,
+      "Latitude": lat ?? 0.0,
+      "Longitude": lng ?? 0.0,
+    };
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -345,20 +374,20 @@ class DetailsController extends GetxController {
       updateLoading.value = true;
       final response = newMember == true
           ? await http.post(
-              Uri.parse(ApiConstants.residentDetails("")),
-              headers: {"Content-Type": "application/json"},
-              body: json.encode(body),
-            )
+        Uri.parse(ApiConstants.residentDetails("")),
+        headers: {"Content-Type": "application/json"},
+        body: json.encode(body),
+      )
           : await http.put(
-              Uri.parse(
-                ApiConstants.residentDetails(
-                  (detailsModel.value.resID ?? resId).toString(),
-                ),
-              ),
+        Uri.parse(
+          ApiConstants.residentDetails(
+            (detailsModel.value.resID ?? resId).toString(),
+          ),
+        ),
 
-              headers: {"Content-Type": "application/json"},
-              body: json.encode(body),
-            );
+        headers: {"Content-Type": "application/json"},
+        body: json.encode(body),
+      );
 
       if (response.statusCode == 200) {
         await Get.find<HomeController>().fetchHomeData();
@@ -470,12 +499,10 @@ class DetailsController extends GetxController {
     });
   }
 
-
-
   Future<void> usertype() async {
     final prefs = await SharedPreferences.getInstance();
     final usertype = prefs.getString('userType');
-    userType.value=usertype!;
+    userType.value = usertype!;
   }
 
   @override
@@ -494,7 +521,7 @@ class DetailsController extends GetxController {
     qualificationController.dispose();
     emailController.dispose();
     mobileController.dispose();
-    livingStatusController.dispose();
+    // livingStatusController.dispose();
     benameController.dispose();
     fnameController.dispose();
     mnameController.dispose();
@@ -555,4 +582,5 @@ class DetailsController extends GetxController {
       downloadLoading.value = false;
     }
   }
+
 }

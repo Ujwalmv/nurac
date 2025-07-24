@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nurac/admin/controlllers/home_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/api_const.dart';
 import '../controlllers/auth_controller.dart';
 import '../controlllers/details_controller.dart';
 import 'home.dart';
+import 'map_screen.dart';
 import 'member_edit_screen.dart';
 
 class DetailsScreen extends StatelessWidget {
@@ -13,6 +15,7 @@ class DetailsScreen extends StatelessWidget {
 
   DetailsScreen({super.key, this.PID, required this.newMember});
   final DetailsController controller = Get.put(DetailsController());
+  final HomeController homeController = Get.put(HomeController());
   final authController = Get.find<AuthController>();
 
   final Color darkColor = const Color(0xFF383C44);
@@ -21,7 +24,6 @@ class DetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-
         Get.to(() => HomePage(), transition: Transition.leftToRight,
           duration: Duration(milliseconds: 300),); // Back button (Android)
         return false;
@@ -87,6 +89,37 @@ class DetailsScreen extends StatelessWidget {
                   keyboardType: TextInputType.phone,
                 ),
                 const SizedBox(height: 15),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        enable: false,
+                        controller: controller.locationController,
+                        label: "Location",
+                        keyboardType: TextInputType.text,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      height: 55, // Matches typical TextField height
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.map),
+                        label: const Text("Pick"),
+                        onPressed: () async {
+                          final result = await Get.to(() => MapPickerScreen());
+                          if (result != null && result is Map) {
+                            final address = result["address"] as String?;
+                            if (address != null) {
+                              controller.locationController.text = address;
+                            }
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+
 
                 Column(
                   children: [
@@ -275,13 +308,13 @@ class DetailsScreen extends StatelessWidget {
 
   Widget _buildTextField({
     required TextEditingController controller,
-    required String label,
+    required String label,bool? enable,
     int maxLines = 1,
     TextInputType keyboardType = TextInputType.text,
   }) {
     return TextField(
       controller: controller,
-      keyboardType: keyboardType,
+      keyboardType: keyboardType,enabled:enable ,
       maxLines: maxLines,
       cursorColor: darkColor,
       decoration: InputDecoration(

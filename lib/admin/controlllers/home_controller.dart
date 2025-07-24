@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:nurac/user/model/dirctory_model.dart';
@@ -32,6 +33,7 @@ class HomeController extends GetxController {
   var birthdaySearchQuery = ''.obs;
   var hasMoreBirthdays = true.obs;
   var isBirthdayLoading = false.obs;
+  final searchController = TextEditingController();
 
 
   @override
@@ -151,6 +153,7 @@ class HomeController extends GetxController {
 
   // Search Members
   void search(String query) {
+    searchController.text=query;
     searchQuery.value = query.toLowerCase();
 
     final filtered = (homeModel?.family ?? []).where((m) {
@@ -196,6 +199,7 @@ class HomeController extends GetxController {
 
   // Search Birthdays
   void searchBirthdays(String query) {
+    searchController.text=query;
     birthdaySearchQuery.value = query;
 
     final filtered = birthdayList.where((b) {

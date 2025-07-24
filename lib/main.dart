@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Member App',
+      title: "Reddiar's",
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primaryColor: primaryColor,

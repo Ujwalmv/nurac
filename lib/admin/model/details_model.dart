@@ -6,15 +6,22 @@ class DetailsModel {
   String? phone2;
   int? associationID;
   List<Details>? details;
+  String? location;
+  String? latitude;
+  String? longitude;
 
-  DetailsModel(
-      {this.resID,
-        this.code,
-        this.address1,
-        this.phone1,
-        this.phone2,
-        this.associationID,
-        this.details});
+  DetailsModel({
+    this.resID,
+    this.code,
+    this.address1,
+    this.phone1,
+    this.phone2,
+    this.associationID,
+    this.details,
+    this.location,
+    this.latitude,
+    this.longitude,
+  });
 
   DetailsModel.fromJson(Map<String, dynamic> json) {
     resID = json['ResID'];
@@ -23,28 +30,37 @@ class DetailsModel {
     phone1 = json['Phone1'];
     phone2 = json['Phone2'];
     associationID = json['AssociationID'];
+    location = json['Location'];
+    latitude = json['Latitude'];
+    longitude = json['Longitude'];
+
     if (json['Details'] != null) {
       details = <Details>[];
       json['Details'].forEach((v) {
-        details!.add(new Details.fromJson(v));
+        details!.add(Details.fromJson(v));
       });
     }
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['ResID'] = this.resID;
-    data['Code'] = this.code;
-    data['Address1'] = this.address1;
-    data['Phone1'] = this.phone1;
-    data['Phone2'] = this.phone2;
-    data['AssociationID'] = this.associationID;
-    if (this.details != null) {
-      data['Details'] = this.details!.map((v) => v.toJson()).toList();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['ResID'] = resID;
+    data['Code'] = code;
+    data['Address1'] = address1;
+    data['Phone1'] = phone1;
+    data['Phone2'] = phone2;
+    data['AssociationID'] = associationID;
+    data['Location'] = location;
+    data['Latitude'] = latitude;
+    data['Longitude'] = longitude;
+
+    if (details != null) {
+      data['Details'] = details!.map((v) => v.toJson()).toList();
     }
     return data;
   }
 }
+
 
 class Details {
   int? pID;

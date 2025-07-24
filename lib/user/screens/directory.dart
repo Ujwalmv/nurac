@@ -176,7 +176,7 @@ class DirectoryScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          m.mobile ?? 'Not Given',
+                          "phone: ${m.mobile=="" ? 'Not Given':m.mobile??""}",
                           style: TextStyle(
                             color: Colors.grey[700],
                             fontSize: 14,

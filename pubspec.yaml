@@ -46,6 +46,11 @@ dependencies:
   device_info_plus: ^11.5.0
   flutter_image_compress: ^2.4.0
   image_cropper: ^9.1.0
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
+  google_maps_flutter: ^2.12.3
+  google_places_flutter: ^2.1.0
+
 
 
 
